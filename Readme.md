@@ -32,7 +32,7 @@ Jack of all trades, master of none when it comes to programming. This is my firs
 At this time, SmoothProxy is barebones. It is guaranteed to break on the stupidest of reasons. If want to avoid unnecessary frustrations, refrain yourself from using SmoothProxy.
 
 ## Feedback
-Direct your comments, questions, and concerns to the SmoothStreams forum. Let us keep it within the community. SmoothProxy is not endosed by SmoothStreams, so do not bother the staff.
+Direct your comments, questions, and concerns to the SmoothStreams forum. Let us keep it within the community. SmoothProxy is not endorsed by SmoothStreams, so do not bother the staff.
 
 ---
 
