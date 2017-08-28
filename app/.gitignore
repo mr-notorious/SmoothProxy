@@ -1,0 +1,9 @@
+/build/generated
+/build/intermediates
+/build/outputs/logs
+/build/tmp
+/libs
+/src/androidTest
+/src/test
+/proguard-rules.pro
+*.iml
