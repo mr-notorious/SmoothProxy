@@ -42,8 +42,8 @@ Direct your comments, questions, and concerns to the SmoothStreams forum. Let us
 * Fog for the awesome EPG.  
 
 ## Dependencies 
-* [google-gson v2.8.1](https://github.com/google/gson) - JSON string to Java objects.
-* [OkHttp v3.8.1](https://github.com/square/okhttp) - Retrieve JSON string from a URL.
+* [google-gson v2.8.1](https://github.com/google/gson) - JSON string to Java object.
+* [OkHttp v3.8.1](https://github.com/square/okhttp) - Retrieve JSON string from URL.
 * [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - Lightweight HTTP web server. 
 
 ## License
