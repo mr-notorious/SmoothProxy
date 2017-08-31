@@ -35,6 +35,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private SharedPreferences mPreferences;
@@ -68,16 +69,9 @@ public class MainActivity extends AppCompatActivity {
         mPreferences = getPreferences(Context.MODE_PRIVATE);
 
         etUsername = (EditText) findViewById(R.id.et_username);
-        etUsername.setText(mPreferences.getString("username", null));
-
         etPassword = (EditText) findViewById(R.id.et_password);
-        etPassword.setText(mPreferences.getString("password", null));
-
         etService = (EditText) findViewById(R.id.et_service);
-        etService.setText(mPreferences.getString("service", null));
-
         etServer = (EditText) findViewById(R.id.et_server);
-        etServer.setText(mPreferences.getString("server", null));
 
         Button bSave = (Button) findViewById(R.id.b_save);
         bSave.setOnClickListener(new View.OnClickListener() {
@@ -91,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
         bExit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                savePreferences();
                 finish();
             }
         });
@@ -100,20 +93,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onBackPressed() {
-        savePreferences();
-        moveTaskToBack(true);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onStart() {
+        super.onStart();
         bindService(new Intent(this, MainService.class), mConnection, BIND_AUTO_CREATE);
+        etUsername.setText(mPreferences.getString("username", null));
+        etPassword.setText(mPreferences.getString("password", null));
+        etService.setText(mPreferences.getString("service", null));
+        etServer.setText(mPreferences.getString("server", null));
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
         if (mIsBound) {
             unbindService(mConnection);
             mIsBound = false;
@@ -126,6 +117,12 @@ public class MainActivity extends AppCompatActivity {
         stopService(new Intent(this, MainService.class));
     }
 
+    @Override
+    public void onBackPressed() {
+        savePreferences();
+        moveTaskToBack(true);
+    }
+
     private void savePreferences() {
         SharedPreferences.Editor editor = mPreferences.edit();
         editor.putString("username", etUsername.getText().toString());
@@ -134,5 +131,6 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("server", etServer.getText().toString());
         editor.commit();
         if (mIsBound) mService.loadPreferences(mPreferences);
+        Toast.makeText(getApplicationContext(), "Preferences saved.", Toast.LENGTH_SHORT).show();
     }
 }

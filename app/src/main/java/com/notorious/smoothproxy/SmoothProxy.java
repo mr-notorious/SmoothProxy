@@ -24,17 +24,11 @@
 
 package com.notorious.smoothproxy;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import fi.iki.elonen.NanoHTTPD;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 
 class SmoothProxy extends NanoHTTPD {
     private final String host;
@@ -58,16 +52,20 @@ class SmoothProxy extends NanoHTTPD {
     public Response serve(IHTTPSession session) {
         Response res = super.serve(session);
         String uri = session.getUri();
+
         if (uri.equals("/epg.xml")) {
             pipe.setNotification("Now serving: EPG");
             res = newFixedLengthResponse(Response.Status.REDIRECT, "application/xml", null);
             res.addHeader("Location", "http://sstv.fog.pt/feed.xml");
+
         } else if (uri.startsWith("/playlist.m3u8")) {
             List<String> ch = session.getParameters().get("ch");
+
             if (ch == null) {
                 pipe.setNotification("Now serving: Playlist");
                 res = newFixedLengthResponse(Response.Status.OK, "application/x-mpegURL", getPlay());
                 res.addHeader("Content-Disposition", "attachment; filename=\"playlist.m3u8\"");
+
             } else {
                 pipe.setNotification("Now serving: Channel " + ch.get(0));
                 res = newFixedLengthResponse(Response.Status.REDIRECT, "application/x-mpegURL", null);
@@ -79,55 +77,34 @@ class SmoothProxy extends NanoHTTPD {
     }
 
     private String getAuth() {
-        long now = System.currentTimeMillis();
-        if (auth == null || time < now) {
-            auth = getJson(String.format("http://auth.smoothstreams.tv/hash_api.php?username=%s&password=%s&site=%s",
+        long NOW = System.currentTimeMillis();
+        if (time < NOW) {
+            auth = Util.getJson(String.format("http://auth.smoothstreams.tv/hash_api.php?username=%s&password=%s&site=%s",
                     username, password, service)).getAsJsonPrimitive("hash").getAsString();
-            time = now + 14100000;
+            time = NOW + 14100000;
         }
         return auth;
     }
 
     private String getPlay() {
-        JsonObject chan = getJson("http://sstv.fog.pt/utc/chanlist.json");
-        JsonObject feed = getJson("http://cdn.smoothstreams.tv/schedule/feed.json");
+        JsonObject chan = Util.getJson("http://sstv.fog.pt/utc/chanlist.json");
+        JsonObject feed = Util.getJson("http://cdn.smoothstreams.tv/schedule/feed.json");
 
         StringBuilder play = new StringBuilder("#EXTM3U\n");
         for (String id : chan.keySet()) {
             String ch = chan.getAsJsonPrimitive(id).getAsString();
+            JsonObject obj = feed.getAsJsonObject(ch);
 
-            JsonObject object = feed.getAsJsonObject(ch);
-
-            String name = object.getAsJsonPrimitive("name").getAsString().substring(5).trim();
+            String name = obj.getAsJsonPrimitive("name").getAsString().substring(5).trim();
             if (name.isEmpty()) name = "Empty";
 
-            String img = object.getAsJsonPrimitive("img").getAsString();
+            String img = obj.getAsJsonPrimitive("img").getAsString();
             if (!img.endsWith("png")) img = "http://mystreams.tv/wp-content/themes/mystreams/img/video-player.png";
 
-            play.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\" channel-id=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    id, ch, img, ch, name, host, port, ch.length() == 1 ? "0" + ch : ch));
+            play.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                    id, ch, img, name, host, port, ch.length() == 1 ? "0" + ch : ch));
         }
         return play.toString();
-    }
-
-    private JsonObject getJson(String url) {
-        try {
-            return new Gson().fromJson(
-                    new OkHttpClient.Builder()
-                            .connectTimeout(30, TimeUnit.SECONDS)
-                            .readTimeout(30, TimeUnit.SECONDS)
-                            .writeTimeout(30, TimeUnit.SECONDS)
-                            .build()
-                            .newCall(new Request.Builder()
-                                    .url(HttpUrl.parse(url))
-                                    .build())
-                            .execute()
-                            .body()
-                            .string(), JsonObject.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     void setUsername(String username) {
