@@ -79,7 +79,7 @@ class SmoothProxy extends NanoHTTPD {
     private String getAuth() {
         long NOW = System.currentTimeMillis();
         if (time < NOW) {
-            auth = Util.getJson(String.format("http://auth.smoothstreams.tv/hash_api.php?username=%s&password=%s&site=%s",
+            auth = Utils.getJson(String.format("http://auth.smoothstreams.tv/hash_api.php?username=%s&password=%s&site=%s",
                     username, password, service)).getAsJsonPrimitive("hash").getAsString();
             time = NOW + 14100000;
         }
@@ -87,8 +87,8 @@ class SmoothProxy extends NanoHTTPD {
     }
 
     private String getPlay() {
-        JsonObject chan = Util.getJson("http://sstv.fog.pt/utc/chanlist.json");
-        JsonObject feed = Util.getJson("http://cdn.smoothstreams.tv/schedule/feed.json");
+        JsonObject chan = Utils.getJson("http://sstv.fog.pt/utc/chanlist.json");
+        JsonObject feed = Utils.getJson("http://cdn.smoothstreams.tv/schedule/feed.json");
 
         StringBuilder play = new StringBuilder("#EXTM3U\n");
         for (String id : chan.keySet()) {
