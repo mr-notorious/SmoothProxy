@@ -26,6 +26,8 @@ package com.notorious.smoothproxy;
 
 import com.google.gson.JsonObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -108,11 +110,19 @@ class SmoothProxy extends NanoHTTPD {
     }
 
     void setUsername(String username) {
-        this.username = username;
+        try {
+            this.username = URLEncoder.encode(username, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     void setPassword(String password) {
-        this.password = password;
+        try {
+            this.password = URLEncoder.encode(password, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     void setService(String service) {
