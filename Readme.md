@@ -21,7 +21,7 @@ Jack of all trades, master of none when it comes to programming. This is my firs
 ## Instructions
 1. Install and launch SmoothProxy on your Android device. 
 2. Fill out **[Username]**, **[Password]**, **[Service]**, and **[Server]** fields.
-3. **[Save]** and back out of SmoothProxy. Note, **[Exit]** will terminate SmoothProxy.
+3. **[Save]** and/or back out of SmoothProxy. Note, **[Exit]** will terminate SmoothProxy.
 ![SmoothProxy Screenshot](http://i.imgur.com/hFBARTQ.png)
 4. To connect SmoothProxy with an IPTV player of your choosing, use the following URLs in verbatim:
     * Playlist URL: **http://localhost:8888/playlist.m3u8**
