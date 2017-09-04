@@ -36,9 +36,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 class Utils {
-    static String encoder(String var) {
+    static String encoder(String arg) {
         try {
-            return URLEncoder.encode(var, "UTF-8");
+            return URLEncoder.encode(arg, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             return null;
