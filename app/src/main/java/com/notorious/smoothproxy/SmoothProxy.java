@@ -26,8 +26,6 @@ package com.notorious.smoothproxy;
 
 import com.google.gson.JsonObject;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.List;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -65,7 +63,7 @@ class SmoothProxy extends NanoHTTPD {
 
             if (ch == null) {
                 pipe.setNotification("Now serving: Playlist");
-                res = newFixedLengthResponse(Response.Status.OK, "application/x-mpegURL", getPlay());
+                res = newFixedLengthResponse(Response.Status.OK, "application/x-mpegURL", getM3U8());
                 res.addHeader("Content-Disposition", "attachment; filename=\"playlist.m3u8\"");
 
             } else {
@@ -82,17 +80,17 @@ class SmoothProxy extends NanoHTTPD {
         long NOW = System.currentTimeMillis();
         if (time < NOW) {
             auth = Utils.getJson(String.format("http://auth.smoothstreams.tv/hash_api.php?username=%s&password=%s&site=%s",
-                    username, password, service)).getAsJsonPrimitive("hash").getAsString();
+                    Utils.encoder(username), Utils.encoder(password), service)).getAsJsonPrimitive("hash").getAsString();
             time = NOW + 14100000;
         }
         return auth;
     }
 
-    private String getPlay() {
+    private String getM3U8() {
         JsonObject chan = Utils.getJson("http://sstv.fog.pt/utc/chanlist.json");
         JsonObject feed = Utils.getJson("http://cdn.smoothstreams.tv/schedule/feed.json");
 
-        StringBuilder play = new StringBuilder("#EXTM3U\n");
+        StringBuilder m3u8 = new StringBuilder("#EXTM3U\n");
         for (String id : chan.keySet()) {
             String ch = chan.getAsJsonPrimitive(id).getAsString();
             JsonObject obj = feed.getAsJsonObject(ch);
@@ -103,26 +101,18 @@ class SmoothProxy extends NanoHTTPD {
             String img = obj.getAsJsonPrimitive("img").getAsString();
             if (!img.endsWith("png")) img = "http://mystreams.tv/wp-content/themes/mystreams/img/video-player.png";
 
-            play.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+            m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
                     id, ch, img, name, host, port, ch.length() == 1 ? "0" + ch : ch));
         }
-        return play.toString();
+        return m3u8.toString();
     }
 
     void setUsername(String username) {
-        try {
-            this.username = URLEncoder.encode(username, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        this.username = username;
     }
 
     void setPassword(String password) {
-        try {
-            this.password = URLEncoder.encode(password, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        this.password = password;
     }
 
     void setService(String service) {

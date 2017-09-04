@@ -28,12 +28,23 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 class Utils {
+    static String encoder(String var) {
+        try {
+            return URLEncoder.encode(var, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     static JsonObject getJson(String url) {
         try {
             return new Gson().fromJson(

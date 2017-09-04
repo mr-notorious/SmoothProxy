@@ -96,10 +96,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         bindService(new Intent(this, MainService.class), mConnection, BIND_AUTO_CREATE);
-        etUsername.setText(mPreferences.getString("username", ""));
-        etPassword.setText(mPreferences.getString("password", ""));
-        etService.setText(mPreferences.getString("service", ""));
-        etServer.setText(mPreferences.getString("server", ""));
+        etUsername.setText(mPreferences.getString("username", null));
+        etPassword.setText(mPreferences.getString("password", null));
+        etService.setText(mPreferences.getString("service", null));
+        etServer.setText(mPreferences.getString("server", null));
     }
 
     @Override
