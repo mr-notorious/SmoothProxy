@@ -89,7 +89,7 @@ class SmoothProxy extends NanoHTTPD {
 
     private String getM3U8() {
         JsonObject chan = Utils.getJson("http://sstv.fog.pt/utc/chanlist.json");
-        JsonObject feed = Utils.getJson("http://cdn.smoothstreams.tv/schedule/feed.json");
+        JsonObject feed = Utils.getJson("http://fast-guide.smoothstreams.tv/feed.json");
 
         StringBuilder m3u8 = new StringBuilder("#EXTM3U\n");
         for (String id : chan.keySet()) {
