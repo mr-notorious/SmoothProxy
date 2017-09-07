@@ -78,7 +78,7 @@ class SmoothProxy extends NanoHTTPD {
 
     private String getAuth() {
         long NOW = System.currentTimeMillis();
-        if (time < NOW) {
+        if (auth == null || time < NOW) {
             auth = Utils.getJson(String.format("http://%s?username=%s&password=%s&site=%s",
                     service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php",
                     Utils.encoder(username), Utils.encoder(password), service)).getAsJsonPrimitive("hash").getAsString();
