@@ -27,8 +27,10 @@ package com.notorious.smoothproxy;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import org.dom4j.Document;
+import org.dom4j.io.SAXReader;
+
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
@@ -39,7 +41,7 @@ class Utils {
     static String encoder(String arg) {
         try {
             return URLEncoder.encode(arg, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -54,12 +56,21 @@ class Utils {
                             .writeTimeout(30, TimeUnit.SECONDS)
                             .build()
                             .newCall(new Request.Builder()
-                                    .url(url)
+                                    .url(new URL(url))
                                     .build())
                             .execute()
                             .body()
                             .string(), JsonObject.class);
-        } catch (IOException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    static Document getXml(String url) {
+        try {
+            return new SAXReader().read(new URL(url));
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }

@@ -125,10 +125,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void savePreferences() {
         SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString("username", etUsername.getText().toString());
-        editor.putString("password", etPassword.getText().toString());
-        editor.putString("service", etService.getText().toString());
-        editor.putString("server", etServer.getText().toString());
+        editor.putString("username", etUsername.getText().toString().trim());
+        editor.putString("password", etPassword.getText().toString().trim());
+        editor.putString("service", etService.getText().toString().trim());
+        editor.putString("server", etServer.getText().toString().trim());
         editor.commit();
         if (mIsBound) mService.loadPreferences(mPreferences);
         Toast.makeText(getApplicationContext(), "Preferences saved.", Toast.LENGTH_SHORT).show();

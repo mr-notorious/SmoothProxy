@@ -25,8 +25,13 @@
 package com.notorious.smoothproxy;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+
+import org.dom4j.Document;
+import org.dom4j.Node;
 
 import java.util.List;
+import java.util.TreeMap;
 
 import fi.iki.elonen.NanoHTTPD;
 
@@ -38,14 +43,24 @@ class SmoothProxy extends NanoHTTPD {
     private String password;
     private String service;
     private String server;
+    private Document epg;
     private String auth;
-    private long time;
+    private long eTime;
+    private long aTime;
 
     SmoothProxy(String host, int port, Pipe pipe) {
         super(host, port);
         this.host = host;
         this.port = port;
         this.pipe = pipe;
+    }
+
+    void login(String username, String password, String service, String server) {
+        this.username = username;
+        this.password = password;
+        this.service = service;
+        this.server = server;
+        auth = null;
     }
 
     @Override
@@ -55,8 +70,8 @@ class SmoothProxy extends NanoHTTPD {
 
         if (uri.equals("/epg.xml")) {
             pipe.setNotification("Now serving: EPG");
-            res = newFixedLengthResponse(Response.Status.REDIRECT, "application/xml", null);
-            res.addHeader("Location", "http://sstv.fog.pt/feed.xml");
+            res = newFixedLengthResponse(Response.Status.OK, "application/xml", getEpg().asXML());
+            res.addHeader("Content-Disposition", "attachment; filename=\"epg.xml\"");
 
         } else if (uri.startsWith("/playlist.m3u8")) {
             List<String> ch = session.getParameters().get("ch");
@@ -76,51 +91,47 @@ class SmoothProxy extends NanoHTTPD {
         return res;
     }
 
-    private String getAuth() {
+    private Document getEpg() {
         long NOW = System.currentTimeMillis();
-        if (auth == null || time < NOW) {
-            auth = Utils.getJson(String.format("http://%s?username=%s&password=%s&site=%s",
-                    service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php",
-                    Utils.encoder(username), Utils.encoder(password), service)).getAsJsonPrimitive("hash").getAsString();
-            time = NOW + 14100000;
+        if (epg == null || eTime < NOW) {
+            epg = Utils.getXml("http://sstv.fog.pt/feed.xml");
+            eTime = NOW + 86100000;
         }
-        return auth;
+        return epg;
     }
 
     private String getM3U8() {
-        JsonObject chan = Utils.getJson("http://sstv.fog.pt/utc/chanlist.json");
         JsonObject feed = Utils.getJson("http://fast-guide.smoothstreams.tv/feed.json");
 
-        StringBuilder m3u8 = new StringBuilder("#EXTM3U\n");
-        for (String id : chan.keySet()) {
-            String ch = chan.getAsJsonPrimitive(id).getAsString();
-            JsonObject obj = feed.getAsJsonObject(ch);
+        TreeMap<Integer, String> map = new TreeMap<>();
+        for (Node node : getEpg().selectNodes("/tv/channel"))
+            map.put(Integer.valueOf(node.valueOf("display-name")), node.valueOf("@id"));
 
-            String name = obj.getAsJsonPrimitive("name").getAsString().substring(5).trim();
+        StringBuilder m3u8 = new StringBuilder("#EXTM3U\n");
+        for (Integer ch : map.keySet()) {
+            JsonObject jO = feed.getAsJsonObject("" + ch);
+
+            String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
             if (name.isEmpty()) name = "Empty";
 
-            String img = obj.getAsJsonPrimitive("img").getAsString();
+            String img = jO.getAsJsonPrimitive("img").getAsString();
             if (!img.endsWith("png")) img = "http://mystreams.tv/wp-content/themes/mystreams/img/video-player.png";
 
             m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    id, ch, img, name, host, port, ch.length() == 1 ? "0" + ch : ch));
+                    map.get(ch), ch, img, name, host, port, (ch < 10 ? "0" : "") + ch));
         }
         return m3u8.toString();
     }
 
-    void setUsername(String username) {
-        this.username = username;
-    }
-
-    void setPassword(String password) {
-        this.password = password;
-    }
-
-    void setService(String service) {
-        this.service = service;
-    }
-
-    void setServer(String server) {
-        this.server = server;
+    private String getAuth() {
+        long NOW = System.currentTimeMillis();
+        if (auth == null || aTime < NOW) {
+            JsonPrimitive jP = Utils.getJson(String.format("http://%s?username=%s&password=%s&site=%s",
+                    service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php",
+                    Utils.encoder(username), Utils.encoder(password), service)).getAsJsonPrimitive("hash");
+            if (jP != null) auth = jP.getAsString();
+            aTime = NOW + 14100000;
+        }
+        return auth;
     }
 }
