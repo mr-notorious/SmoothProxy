@@ -30,6 +30,7 @@ import com.google.gson.JsonPrimitive;
 import org.dom4j.Document;
 import org.dom4j.Node;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -100,29 +101,6 @@ class SmoothProxy extends NanoHTTPD {
         return epg;
     }
 
-    private String getM3U8() {
-        JsonObject feed = Utils.getJson("http://fast-guide.smoothstreams.tv/feed.json");
-
-        TreeMap<Integer, String> map = new TreeMap<>();
-        for (Node node : getEpg().selectNodes("/tv/channel"))
-            map.put(Integer.valueOf(node.valueOf("display-name")), node.valueOf("@id"));
-
-        StringBuilder m3u8 = new StringBuilder("#EXTM3U\n");
-        for (Integer ch : map.keySet()) {
-            JsonObject jO = feed.getAsJsonObject("" + ch);
-
-            String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
-            if (name.isEmpty()) name = "Empty";
-
-            String img = jO.getAsJsonPrimitive("img").getAsString();
-            if (!img.endsWith("png")) img = "http://mystreams.tv/wp-content/themes/mystreams/img/video-player.png";
-
-            m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    map.get(ch), ch, img, name, host, port, (ch < 10 ? "0" : "") + ch));
-        }
-        return m3u8.toString();
-    }
-
     private String getAuth() {
         long NOW = System.currentTimeMillis();
         if (auth == null || aTime < NOW) {
@@ -133,5 +111,34 @@ class SmoothProxy extends NanoHTTPD {
             aTime = NOW + 14100000;
         }
         return auth;
+    }
+
+    private String getM3U8() {
+        JsonObject feed = Utils.getJson("http://fast-guide.smoothstreams.tv/feed.json");
+
+        TreeMap<String, String> map = new TreeMap<>(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return Integer.valueOf(o1).compareTo(Integer.valueOf(o2));
+            }
+        });
+
+        for (Node node : getEpg().selectNodes("/tv/channel"))
+            map.put(node.valueOf("display-name"), node.valueOf("@id"));
+
+        StringBuilder m3u8 = new StringBuilder("#EXTM3U\n");
+        for (String ch : map.keySet()) {
+            JsonObject jO = feed.getAsJsonObject(ch);
+
+            String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
+            if (name.isEmpty()) name = "Empty";
+
+            String img = jO.getAsJsonPrimitive("img").getAsString();
+            if (!img.endsWith("png")) img = "http://mystreams.tv/wp-content/themes/mystreams/img/video-player.png";
+
+            m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                    map.get(ch), ch, img, name, host, port, ch.length() == 1 ? "0" + ch : ch));
+        }
+        return m3u8.toString();
     }
 }
