@@ -39,6 +39,7 @@ Direct your comments, questions, and concerns to the SmoothStreams forum. Let us
 ## Acknowledgments
 * [@SmoothStreamsTV](https://twitter.com/smoothstreamstv) for the awesome service. 
 * The community for being awesome testers.
+* Obs for the awesome banner.
 * Fog for the awesome EPG.  
 
 ## Dependencies 
