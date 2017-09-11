@@ -103,12 +103,12 @@ class SmoothProxy extends NanoHTTPD {
 
         JsonObject map = Utils.getJson("http://sstv.fog.pt/channels.json");
         if (map != null) for (String key : map.keySet()) {
-            JsonObject val = map.getAsJsonObject(key);
+            JsonObject jO = map.getAsJsonObject(key);
 
-            String id = val.getAsJsonPrimitive("zap2it").getAsString();
-            String ch = val.getAsJsonPrimitive("channum").getAsString();
-            String icon = val.getAsJsonPrimitive("icon").getAsString();
-            String name = val.getAsJsonPrimitive("channame").getAsString();
+            String id = jO.getAsJsonPrimitive("zap2it").getAsString();
+            String ch = jO.getAsJsonPrimitive("channum").getAsString();
+            String icon = jO.getAsJsonPrimitive("icon").getAsString();
+            String name = jO.getAsJsonPrimitive("channame").getAsString();
 
             m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
                     id, ch, icon, name.isEmpty() ? "Empty" : name, host, port, ch.length() == 1 ? "0" + ch : ch));
