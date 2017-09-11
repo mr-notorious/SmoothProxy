@@ -27,9 +27,6 @@ package com.notorious.smoothproxy;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import org.dom4j.Document;
-import org.dom4j.io.SAXReader;
-
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
@@ -61,15 +58,6 @@ class Utils {
                             .execute()
                             .body()
                             .string(), JsonObject.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    static Document getXml(String url) {
-        try {
-            return new SAXReader().read(new URL(url));
         } catch (Exception e) {
             e.printStackTrace();
             return null;

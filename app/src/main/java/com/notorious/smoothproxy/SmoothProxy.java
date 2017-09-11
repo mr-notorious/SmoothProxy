@@ -27,12 +27,7 @@ package com.notorious.smoothproxy;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import org.dom4j.Document;
-import org.dom4j.Node;
-
-import java.util.Comparator;
 import java.util.List;
-import java.util.TreeMap;
 
 import fi.iki.elonen.NanoHTTPD;
 
@@ -44,10 +39,8 @@ class SmoothProxy extends NanoHTTPD {
     private String password;
     private String service;
     private String server;
-    private Document epg;
     private String auth;
-    private long eTime;
-    private long aTime;
+    private long time;
 
     SmoothProxy(String host, int port, Pipe pipe) {
         super(host, port);
@@ -67,12 +60,12 @@ class SmoothProxy extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         Response res = super.serve(session);
-        String uri = session.getUri();
 
+        String uri = session.getUri();
         if (uri.equals("/epg.xml")) {
             pipe.setNotification("Now serving: EPG");
-            res = newFixedLengthResponse(Response.Status.OK, "application/xml", getEpg().asXML());
-            res.addHeader("Content-Disposition", "attachment; filename=\"epg.xml\"");
+            res = newFixedLengthResponse(Response.Status.REDIRECT, "application/xml", null);
+            res.addHeader("Location", "http://sstv.fog.pt/feed.xml");
 
         } else if (uri.startsWith("/playlist.m3u8")) {
             List<String> ch = session.getParameters().get("ch");
@@ -92,52 +85,33 @@ class SmoothProxy extends NanoHTTPD {
         return res;
     }
 
-    private Document getEpg() {
-        long NOW = System.currentTimeMillis();
-        if (epg == null || eTime < NOW) {
-            epg = Utils.getXml("http://sstv.fog.pt/feed.xml");
-            eTime = NOW + 86100000;
-        }
-        return epg;
-    }
-
     private String getAuth() {
         long NOW = System.currentTimeMillis();
-        if (auth == null || aTime < NOW) {
+        if (auth == null || time < NOW) {
             JsonPrimitive jP = Utils.getJson(String.format("http://%s?username=%s&password=%s&site=%s",
                     service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php",
                     Utils.encoder(username), Utils.encoder(password), service)).getAsJsonPrimitive("hash");
+
             if (jP != null) auth = jP.getAsString();
-            aTime = NOW + 14100000;
+            time = NOW + 14100000;
         }
         return auth;
     }
 
     private String getM3U8() {
-        JsonObject feed = Utils.getJson("http://fast-guide.smoothstreams.tv/feed.json");
-
-        TreeMap<String, String> map = new TreeMap<>(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                return Integer.valueOf(o1).compareTo(Integer.valueOf(o2));
-            }
-        });
-
-        for (Node node : getEpg().selectNodes("/tv/channel"))
-            map.put(node.valueOf("display-name"), node.valueOf("@id"));
-
         StringBuilder m3u8 = new StringBuilder("#EXTM3U\n");
-        for (String ch : map.keySet()) {
-            JsonObject jO = feed.getAsJsonObject(ch);
 
-            String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
-            if (name.isEmpty()) name = "Empty";
+        JsonObject map = Utils.getJson("http://sstv.fog.pt/channels.json");
+        if (map != null) for (String key : map.keySet()) {
+            JsonObject val = map.getAsJsonObject(key);
 
-            String img = jO.getAsJsonPrimitive("img").getAsString();
-            if (!img.endsWith("png")) img = "http://mystreams.tv/wp-content/themes/mystreams/img/video-player.png";
+            String id = val.getAsJsonPrimitive("zap2it").getAsString();
+            String ch = val.getAsJsonPrimitive("channum").getAsString();
+            String icon = val.getAsJsonPrimitive("icon").getAsString();
+            String name = val.getAsJsonPrimitive("channame").getAsString();
 
             m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    map.get(ch), ch, img, name, host, port, ch.length() == 1 ? "0" + ch : ch));
+                    id, ch, icon, name.isEmpty() ? "Empty" : name, host, port, ch.length() == 1 ? "0" + ch : ch));
         }
         return m3u8.toString();
     }
