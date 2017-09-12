@@ -1,6 +1,6 @@
 # SmoothProxy
 
-![SmoothProxy Logo](http://i.imgur.com/bDCIRp4.png "Logo courtesy of r/SmoothStreamsTV")
+![SmoothProxy Icon](http://i.imgur.com/cWxIruq.png "Icon courtesy of Obs")
 
 ---
 
@@ -22,7 +22,7 @@ Jack of all trades, master of none when it comes to programming. This is my firs
 1. Install and launch SmoothProxy on your Android device. 
 2. Fill out **[Username]**, **[Password]**, **[Service]**, and **[Server]** fields.
 3. **[Save]** and/or back out of SmoothProxy. Note, **[Exit]** will terminate SmoothProxy.
-![SmoothProxy Screenshot](http://i.imgur.com/P2yfgGz.png)
+![SmoothProxy Screenshot](http://i.imgur.com/zfhnmFJ.png)
 4. To connect SmoothProxy with an IPTV player of your choosing, use the following URLs in verbatim:
     * Playlist URL: **http://localhost:8888/playlist.m3u8**
     * Fog's EPG URL: **http://localhost:8888/epg.xml**
@@ -39,8 +39,8 @@ Direct your comments, questions, and concerns to the SmoothStreams forum. Let us
 ## Acknowledgments
 * [@SmoothStreamsTV](https://twitter.com/smoothstreamstv) for the awesome service. 
 * The community for being awesome testers.
-* Obs for the awesome banner.
-* Fog for the awesome EPG.  
+* Obs for the awesome icon.
+* Fog for the awesome EPG.
 
 ## Dependencies 
 * [google-gson v2.8.1](https://github.com/google/gson) - JSON string to Java object.
