@@ -79,8 +79,8 @@ public class MainService extends Service implements Pipe {
     }
 
     void loadPreferences(SharedPreferences preferences) {
-        proxy.login(preferences.getString("username", null), preferences.getString("password", null),
-                preferences.getString("service", null), preferences.getString("server", null));
+        proxy.init(preferences.getString("username", null), preferences.getString("password", null), preferences.getString("service", null),
+                preferences.getString("server", null), preferences.getInt("quality", R.id.r_hd) - R.id.r_hd + 1);
     }
 
     class LocalBinder extends Binder {

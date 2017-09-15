@@ -39,6 +39,7 @@ class SmoothProxy extends NanoHTTPD {
     private String password;
     private String service;
     private String server;
+    private int quality;
     private String auth;
     private long time;
 
@@ -49,12 +50,14 @@ class SmoothProxy extends NanoHTTPD {
         this.pipe = pipe;
     }
 
-    void login(String username, String password, String service, String server) {
+    void init(String username, String password, String service, String server, int quality) {
         this.username = username;
         this.password = password;
         this.service = service;
         this.server = server;
+        this.quality = quality;
         auth = null;
+        time = 0;
     }
 
     @Override
@@ -78,8 +81,8 @@ class SmoothProxy extends NanoHTTPD {
             } else {
                 pipe.setNotification("Now serving: Channel " + ch.get(0));
                 res = newFixedLengthResponse(Response.Status.REDIRECT, "application/x-mpegURL", null);
-                res.addHeader("Location", String.format("http://%s.smoothstreams.tv:9100/%s/ch%sq1.stream/playlist.m3u8?wmsAuthSign=%s==",
-                        server, service, ch.get(0), getAuth()));
+                res.addHeader("Location", String.format("http://%s.smoothstreams.tv:9100/%s/ch%sq%s.stream/playlist.m3u8?wmsAuthSign=%s==",
+                        server, service, ch.get(0), quality, getAuth()));
             }
         }
         return res;
@@ -92,8 +95,10 @@ class SmoothProxy extends NanoHTTPD {
                     service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php",
                     Utils.encoder(username), Utils.encoder(password), service)).getAsJsonPrimitive("hash");
 
-            if (jP != null) auth = jP.getAsString();
-            time = NOW + 14100000;
+            if (jP != null) {
+                auth = jP.getAsString();
+                time = NOW + 14100000;
+            }
         }
         return auth;
     }

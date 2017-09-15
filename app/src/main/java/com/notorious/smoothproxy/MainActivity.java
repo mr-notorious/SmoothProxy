@@ -35,6 +35,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText etPassword;
     private EditText etService;
     private EditText etServer;
+    private RadioGroup rgQuality;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -72,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         etPassword = (EditText) findViewById(R.id.et_password);
         etService = (EditText) findViewById(R.id.et_service);
         etServer = (EditText) findViewById(R.id.et_server);
+        rgQuality = (RadioGroup) findViewById(R.id.rg_quality);
 
         Button bSave = (Button) findViewById(R.id.b_save);
         bSave.setOnClickListener(new View.OnClickListener() {
@@ -100,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
         etPassword.setText(mPreferences.getString("password", null));
         etService.setText(mPreferences.getString("service", null));
         etServer.setText(mPreferences.getString("server", null));
+        rgQuality.check(mPreferences.getInt("quality", R.id.r_hd));
     }
 
     @Override
@@ -129,7 +133,9 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("password", etPassword.getText().toString().trim());
         editor.putString("service", etService.getText().toString().trim());
         editor.putString("server", etServer.getText().toString().trim());
+        editor.putInt("quality", rgQuality.getCheckedRadioButtonId());
         editor.commit();
+
         if (mIsBound) mService.loadPreferences(mPreferences);
         Toast.makeText(getApplicationContext(), "Preferences saved.", Toast.LENGTH_SHORT).show();
     }
