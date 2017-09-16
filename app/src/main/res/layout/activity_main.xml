@@ -1,221 +1,185 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                             xmlns:app="http://schemas.android.com/apk/res-auto"
-                                             xmlns:tools="http://schemas.android.com/tools"
-                                             android:layout_width="match_parent"
-                                             android:layout_height="match_parent"
-                                             tools:context="com.notorious.smoothproxy.MainActivity"
-                                             tools:layout_editor_absoluteX="0dp"
-                                             tools:layout_editor_absoluteY="81dp">
-
-    <android.support.constraint.ConstraintLayout
-        android:id="@+id/constraintLayout"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="186dp"
-        android:layout_marginLeft="89dp"
-        android:layout_marginStart="89dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"/>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.notorious.smoothproxy.MainActivity"
+    android:paddingTop="16dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:orientation="vertical"
+    android:gravity="center">
 
     <TextView
         android:id="@+id/tv_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Username"
-        app:layout_constraintLeft_toLeftOf="@+id/et_username"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:text="Username" />
 
     <EditText
         android:id="@+id/et_username"
         android:layout_width="wrap_content"
-        android:layout_height="39dp"
-        android:layout_marginBottom="17dp"
-        android:layout_marginTop="17dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
         android:ems="10"
-        android:inputType="textVisiblePassword"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_password"
-        app:layout_constraintLeft_toLeftOf="@+id/et_password"
-        app:layout_constraintRight_toRightOf="@+id/et_password"
-        app:layout_constraintTop_toTopOf="@+id/tv_username"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:inputType="textVisiblePassword" />
 
     <TextView
         android:id="@+id/tv_password"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
         android:text="Password"
-        app:layout_constraintBottom_toBottomOf="@+id/b_save"
-        app:layout_constraintLeft_toLeftOf="@+id/et_username"
-        app:layout_constraintTop_toBottomOf="@+id/b_save"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        />
 
     <EditText
         android:id="@+id/et_password"
         android:layout_width="wrap_content"
-        android:layout_height="39dp"
-        android:layout_marginTop="17dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:ems="10"
         android:inputType="textPassword"
-        app:layout_constraintLeft_toLeftOf="@+id/et_service"
-        app:layout_constraintRight_toRightOf="@+id/et_service"
-        app:layout_constraintTop_toBottomOf="@+id/et_username"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"/>
 
     <TextView
         android:id="@+id/tv_service"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Service"
-        app:layout_constraintBottom_toBottomOf="@+id/b_exit"
-        app:layout_constraintLeft_toLeftOf="@+id/et_password"
-        app:layout_constraintTop_toBottomOf="@+id/b_exit"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"/>
 
     <EditText
         android:id="@+id/et_service"
         android:layout_width="wrap_content"
-        android:layout_height="39dp"
-        android:layout_marginTop="17dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:ems="10"
         android:inputType="textVisiblePassword"
-        app:layout_constraintLeft_toLeftOf="@+id/et_server"
-        app:layout_constraintRight_toRightOf="@+id/et_server"
-        app:layout_constraintTop_toBottomOf="@+id/et_password"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"/>
 
     <TextView
         android:id="@+id/tv_server"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Server"
-        app:layout_constraintLeft_toLeftOf="@+id/et_service"
-        app:layout_constraintTop_toBottomOf="@+id/et_service"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"/>
 
     <EditText
         android:id="@+id/et_server"
         android:layout_width="wrap_content"
-        android:layout_height="39dp"
-        android:layout_marginTop="17dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:ems="10"
         android:inputType="textVisiblePassword"
-        app:layout_constraintLeft_toLeftOf="@+id/rg_quality"
-        app:layout_constraintRight_toRightOf="@+id/rg_quality"
-        app:layout_constraintTop_toBottomOf="@+id/et_service"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"/>
 
     <TextView
         android:id="@+id/tv_quality"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Quality"
-        app:layout_constraintLeft_toLeftOf="@+id/et_server"
-        app:layout_constraintTop_toBottomOf="@+id/et_server"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"/>
 
     <RadioGroup
         android:id="@+id/rg_quality"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="78dp"
-        android:layout_marginRight="78dp"
-        android:layout_marginTop="17dp"
         android:orientation="horizontal"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/et_server"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1">
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp">
 
         <RadioButton
             android:id="@+id/r_hd"
-            android:layout_width="71dp"
-            android:layout_height="39dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:text="HD"/>
 
         <RadioButton
             android:id="@+id/r_hq"
-            android:layout_width="71dp"
-            android:layout_height="39dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:text="HQ"/>
 
         <RadioButton
             android:id="@+id/r_lq"
-            android:layout_width="71dp"
-            android:layout_height="39dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:text="LQ"/>
     </RadioGroup>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:orientation="horizontal">
 
     <Button
         android:id="@+id/b_save"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="33dp"
         android:text="Save"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:layout_marginTop="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"/>
 
     <Button
         android:id="@+id/b_exit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Exit"
-        app:layout_constraintLeft_toLeftOf="@+id/b_save"
-        app:layout_constraintRight_toRightOf="@+id/b_save"
-        app:layout_constraintTop_toBottomOf="@+id/b_save"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        android:text="Exit" />
+    </LinearLayout>
 
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
     <TextView
         android:id="@+id/tv_signature"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="14dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginStart="16dp"
-        android:text="mr-notorious"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"/>
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:paddingBottom="8dp"
+        android:text="mr-notorious" />
 
     <TextView
         android:id="@+id/tv_version"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
-        android:text="v1.1.1"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintRight_creator="1"/>
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:paddingBottom="8dp"
+        android:text="v1.1.1" />
+    </RelativeLayout>
 
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>
