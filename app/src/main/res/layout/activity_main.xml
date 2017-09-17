@@ -34,7 +34,7 @@
         android:id="@+id/tv_password"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:text="Password"
@@ -56,7 +56,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Service"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"/>
 
@@ -76,7 +76,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Server"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"/>
 
@@ -96,7 +96,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Quality"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"/>
 
@@ -113,7 +113,6 @@
             android:id="@+id/r_hd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="8dp"
             android:paddingRight="8dp"
             android:text="HD"/>
 
@@ -121,7 +120,6 @@
             android:id="@+id/r_hq"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="8dp"
             android:paddingRight="8dp"
             android:text="HQ"/>
 
@@ -129,7 +127,6 @@
             android:id="@+id/r_lq"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="8dp"
             android:paddingRight="8dp"
             android:text="LQ"/>
     </RadioGroup>
@@ -147,7 +144,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Save"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"/>
 
@@ -155,7 +152,7 @@
         android:id="@+id/b_exit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:text="Exit" />
     </LinearLayout>
 
