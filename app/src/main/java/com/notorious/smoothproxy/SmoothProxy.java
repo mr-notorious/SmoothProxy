@@ -25,7 +25,6 @@
 package com.notorious.smoothproxy;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 import java.util.List;
 
@@ -91,12 +90,12 @@ class SmoothProxy extends NanoHTTPD {
     private String getAuth() {
         long NOW = System.currentTimeMillis();
         if (auth == null || time < NOW) {
-            JsonPrimitive jP = Utils.getJson(String.format("http://%s?username=%s&password=%s&site=%s",
+            JsonObject jO = Utils.getJson(String.format("http://%s?username=%s&password=%s&site=%s",
                     service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php",
-                    Utils.encoder(username), Utils.encoder(password), service)).getAsJsonPrimitive("hash");
+                    Utils.encoder(username), Utils.encoder(password), service));
 
-            if (jP != null) {
-                auth = jP.getAsString();
+            if (jO != null && jO.getAsJsonPrimitive("code").getAsInt() == 1) {
+                auth = jO.getAsJsonPrimitive("hash").getAsString();
                 time = NOW + 14100000;
             }
         }
