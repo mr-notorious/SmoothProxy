@@ -25,7 +25,7 @@ Jack of all trades, master of none when it comes to programming. This is my firs
 ![SmoothProxy Screenshot](https://i.imgur.com/UBUKTPB.png)
 4. To connect SmoothProxy with an IPTV player of your choosing, use the following URLs in verbatim:
     * Playlist URL: **http://localhost:8888/playlist.m3u8**
-    * Fog's EPG URL: **http://localhost:8888/epg.xml**
+    * EPG URL: **http://localhost:8888/epg.xml**
 5. *Enjoy!*
 
 ## Warning
