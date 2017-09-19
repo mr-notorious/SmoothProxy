@@ -6,27 +6,30 @@
                                              android:layout_height="match_parent"
                                              tools:context="com.notorious.smoothproxy.MainActivity"
                                              tools:layout_editor_absoluteX="0dp"
-                                             tools:layout_editor_absoluteY="81dp">
+                                             tools:layout_editor_absoluteY="57dp">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="186dp"
-        android:layout_marginLeft="89dp"
-        android:layout_marginStart="89dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"/>
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1"
+        tools:layout_constraintTop_creator="1"/>
 
     <TextView
         android:id="@+id/tv_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
         android:text="Username"
-        app:layout_constraintLeft_toLeftOf="@+id/et_username"
+        app:layout_constraintLeft_toRightOf="@+id/b_save"
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintTop_creator="1"/>
@@ -34,18 +37,16 @@
     <EditText
         android:id="@+id/et_username"
         android:layout_width="wrap_content"
-        android:layout_height="39dp"
+        android:layout_height="0dp"
         android:layout_marginBottom="17dp"
         android:layout_marginTop="17dp"
         android:ems="10"
         android:inputType="textVisiblePassword"
         app:layout_constraintBottom_toBottomOf="@+id/tv_password"
-        app:layout_constraintLeft_toLeftOf="@+id/et_password"
-        app:layout_constraintRight_toRightOf="@+id/et_password"
+        app:layout_constraintLeft_toLeftOf="@+id/tv_username"
         app:layout_constraintTop_toTopOf="@+id/tv_username"
         tools:layout_constraintBottom_creator="1"
         tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
         tools:layout_constraintTop_creator="1"/>
 
     <TextView
@@ -67,8 +68,8 @@
         android:layout_marginTop="17dp"
         android:ems="10"
         android:inputType="textPassword"
-        app:layout_constraintLeft_toLeftOf="@+id/et_service"
-        app:layout_constraintRight_toRightOf="@+id/et_service"
+        app:layout_constraintLeft_toLeftOf="@+id/et_username"
+        app:layout_constraintRight_toRightOf="@+id/et_username"
         app:layout_constraintTop_toBottomOf="@+id/et_username"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
@@ -93,8 +94,8 @@
         android:layout_marginTop="17dp"
         android:ems="10"
         android:inputType="textVisiblePassword"
-        app:layout_constraintLeft_toLeftOf="@+id/et_server"
-        app:layout_constraintRight_toRightOf="@+id/et_server"
+        app:layout_constraintLeft_toLeftOf="@+id/et_password"
+        app:layout_constraintRight_toRightOf="@+id/et_password"
         app:layout_constraintTop_toBottomOf="@+id/et_password"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
@@ -117,8 +118,8 @@
         android:layout_marginTop="17dp"
         android:ems="10"
         android:inputType="textVisiblePassword"
-        app:layout_constraintLeft_toLeftOf="@+id/rg_quality"
-        app:layout_constraintRight_toRightOf="@+id/rg_quality"
+        app:layout_constraintLeft_toLeftOf="@+id/et_service"
+        app:layout_constraintRight_toRightOf="@+id/et_service"
         app:layout_constraintTop_toBottomOf="@+id/et_service"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
@@ -138,13 +139,10 @@
         android:id="@+id/rg_quality"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="78dp"
-        android:layout_marginRight="78dp"
-        android:layout_marginTop="17dp"
         android:orientation="horizontal"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/et_server"
-        tools:layout_constraintRight_creator="1"
+        app:layout_constraintLeft_toLeftOf="@+id/tv_quality"
+        app:layout_constraintTop_toBottomOf="@+id/tv_quality"
+        tools:layout_constraintLeft_creator="1"
         tools:layout_constraintTop_creator="1">
 
         <RadioButton
@@ -166,13 +164,46 @@
             android:text="LQ"/>
     </RadioGroup>
 
+    <TextView
+        android:id="@+id/tv_epg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Epg"
+        app:layout_constraintLeft_toLeftOf="@+id/rg_quality"
+        app:layout_constraintTop_toBottomOf="@+id/rg_quality"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintTop_creator="1"/>
+
+    <RadioGroup
+        android:id="@+id/rg_epg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintLeft_toLeftOf="@+id/tv_epg"
+        app:layout_constraintTop_toBottomOf="@+id/tv_epg"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintTop_creator="1">
+
+        <RadioButton
+            android:id="@+id/r_full"
+            android:layout_width="71dp"
+            android:layout_height="39dp"
+            android:text="Full"/>
+
+        <RadioButton
+            android:id="@+id/r_lite"
+            android:layout_width="71dp"
+            android:layout_height="39dp"
+            android:text="Lite"/>
+    </RadioGroup>
+
     <Button
         android:id="@+id/b_save"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="33dp"
+        android:layout_marginTop="25dp"
         android:text="Save"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -193,26 +224,13 @@
         tools:layout_constraintTop_creator="1"/>
 
     <TextView
-        android:id="@+id/tv_signature"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="14dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginStart="16dp"
-        android:text="mr-notorious"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"/>
-
-    <TextView
         android:id="@+id/tv_version"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
-        android:text="v1.1.2"
+        android:text="v1.1.3"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         tools:layout_constraintBottom_creator="1"

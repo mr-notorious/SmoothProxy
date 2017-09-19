@@ -39,6 +39,7 @@ class SmoothProxy extends NanoHTTPD {
     private String service;
     private String server;
     private int quality;
+    private boolean epg;
     private String auth;
     private long time;
 
@@ -49,12 +50,13 @@ class SmoothProxy extends NanoHTTPD {
         this.pipe = pipe;
     }
 
-    void init(String username, String password, String service, String server, int quality) {
+    void init(String username, String password, String service, String server, int quality, boolean epg) {
         this.username = username;
         this.password = password;
         this.service = service;
         this.server = server;
         this.quality = quality;
+        this.epg = epg;
         auth = null;
         time = 0;
     }
@@ -67,7 +69,7 @@ class SmoothProxy extends NanoHTTPD {
         if (uri.equals("/epg.xml")) {
             pipe.setNotification("Now serving: EPG");
             res = newFixedLengthResponse(Response.Status.REDIRECT, "application/xml", null);
-            res.addHeader("Location", "http://sstv.fog.pt/feed.xml");
+            res.addHeader("Location", epg ? "http://sstv.fog.pt/feed.xml" : "http://speed.guide.smoothstreams.tv/feed.xml");
 
         } else if (uri.startsWith("/playlist.m3u8")) {
             List<String> ch = session.getParameters().get("ch");
@@ -114,8 +116,8 @@ class SmoothProxy extends NanoHTTPD {
             String icon = jO.getAsJsonPrimitive("icon").getAsString();
             String name = jO.getAsJsonPrimitive("channame").getAsString();
 
-            m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-name=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    id, ch, icon, name.isEmpty() ? "Empty" : name, host, port, ch.length() == 1 ? "0" + ch : ch));
+            m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-logo=\"%s\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                    epg ? id : ch, icon, !name.isEmpty() ? name : "Empty", host, port, ch.length() == 1 ? "0" + ch : ch));
         }
         return m3u8.toString();
     }

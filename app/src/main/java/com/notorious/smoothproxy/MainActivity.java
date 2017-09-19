@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText etService;
     private EditText etServer;
     private RadioGroup rgQuality;
+    private RadioGroup rgEpg;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
         etService = (EditText) findViewById(R.id.et_service);
         etServer = (EditText) findViewById(R.id.et_server);
         rgQuality = (RadioGroup) findViewById(R.id.rg_quality);
+        rgEpg = (RadioGroup) findViewById(R.id.rg_epg);
 
         Button bSave = (Button) findViewById(R.id.b_save);
         bSave.setOnClickListener(new View.OnClickListener() {
@@ -104,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
         etService.setText(mPreferences.getString("service", null));
         etServer.setText(mPreferences.getString("server", null));
         rgQuality.check(mPreferences.getInt("quality", R.id.r_hd));
+        rgEpg.check(mPreferences.getInt("epg", R.id.r_full));
     }
 
     @Override
@@ -134,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("service", etService.getText().toString().trim());
         editor.putString("server", etServer.getText().toString().trim());
         editor.putInt("quality", rgQuality.getCheckedRadioButtonId());
+        editor.putInt("epg", rgEpg.getCheckedRadioButtonId());
         editor.commit();
 
         if (mIsBound) mService.loadPreferences(mPreferences);
