@@ -87,51 +87,39 @@
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintTop_creator="1"/>
 
-    <EditText
-        android:id="@+id/et_service"
+    <Spinner
+        android:id="@+id/spinner_service"
         android:layout_width="wrap_content"
         android:layout_height="39dp"
-        android:layout_marginTop="17dp"
-        android:ems="10"
-        android:inputType="textVisiblePassword"
         app:layout_constraintLeft_toLeftOf="@+id/et_password"
         app:layout_constraintRight_toRightOf="@+id/et_password"
-        app:layout_constraintTop_toBottomOf="@+id/et_password"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        app:layout_constraintTop_toBottomOf="@+id/tv_service" />
 
     <TextView
         android:id="@+id/tv_server"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Server"
-        app:layout_constraintLeft_toLeftOf="@+id/et_service"
-        app:layout_constraintTop_toBottomOf="@+id/et_service"
+        app:layout_constraintLeft_toLeftOf="@+id/tv_service"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_service"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintTop_creator="1"/>
 
-    <EditText
-        android:id="@+id/et_server"
+    <Spinner
+        android:id="@+id/spinner_server"
         android:layout_width="wrap_content"
         android:layout_height="39dp"
-        android:layout_marginTop="17dp"
-        android:ems="10"
-        android:inputType="textVisiblePassword"
-        app:layout_constraintLeft_toLeftOf="@+id/et_service"
-        app:layout_constraintRight_toRightOf="@+id/et_service"
-        app:layout_constraintTop_toBottomOf="@+id/et_service"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        app:layout_constraintLeft_toLeftOf="@+id/et_password"
+        app:layout_constraintRight_toRightOf="@+id/et_password"
+        app:layout_constraintTop_toBottomOf="@+id/tv_server" />
 
     <TextView
         android:id="@+id/tv_quality"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Quality"
-        app:layout_constraintLeft_toLeftOf="@+id/et_server"
-        app:layout_constraintTop_toBottomOf="@+id/et_server"
+        app:layout_constraintLeft_toLeftOf="@+id/et_password"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_server"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintTop_creator="1"/>
 
