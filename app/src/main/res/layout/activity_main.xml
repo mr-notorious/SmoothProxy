@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                             xmlns:app="http://schemas.android.com/apk/res-auto"
-                                             xmlns:tools="http://schemas.android.com/tools"
-                                             android:layout_width="match_parent"
-                                             android:layout_height="match_parent"
-                                             tools:context="com.notorious.smoothproxy.MainActivity"
-                                             tools:layout_editor_absoluteX="0dp"
-                                             tools:layout_editor_absoluteY="57dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.notorious.smoothproxy.MainActivity"
+    tools:layout_editor_absoluteX="0dp"
+    tools:layout_editor_absoluteY="57dp">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout"
@@ -19,7 +19,7 @@
         tools:layout_constraintBottom_creator="1"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <TextView
         android:id="@+id/tv_username"
@@ -32,7 +32,7 @@
         app:layout_constraintLeft_toRightOf="@+id/b_save"
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <EditText
         android:id="@+id/et_username"
@@ -47,7 +47,7 @@
         app:layout_constraintTop_toTopOf="@+id/tv_username"
         tools:layout_constraintBottom_creator="1"
         tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <TextView
         android:id="@+id/tv_password"
@@ -59,7 +59,7 @@
         app:layout_constraintTop_toBottomOf="@+id/b_save"
         tools:layout_constraintBottom_creator="1"
         tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <EditText
         android:id="@+id/et_password"
@@ -73,7 +73,7 @@
         app:layout_constraintTop_toBottomOf="@+id/et_username"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <TextView
         android:id="@+id/tv_service"
@@ -85,7 +85,7 @@
         app:layout_constraintTop_toBottomOf="@+id/b_exit"
         tools:layout_constraintBottom_creator="1"
         tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <EditText
         android:id="@+id/et_service"
@@ -99,7 +99,7 @@
         app:layout_constraintTop_toBottomOf="@+id/et_password"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <TextView
         android:id="@+id/tv_server"
@@ -109,7 +109,7 @@
         app:layout_constraintLeft_toLeftOf="@+id/et_service"
         app:layout_constraintTop_toBottomOf="@+id/et_service"
         tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <EditText
         android:id="@+id/et_server"
@@ -123,7 +123,7 @@
         app:layout_constraintTop_toBottomOf="@+id/et_service"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <TextView
         android:id="@+id/tv_quality"
@@ -133,7 +133,7 @@
         app:layout_constraintLeft_toLeftOf="@+id/et_server"
         app:layout_constraintTop_toBottomOf="@+id/et_server"
         tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <RadioGroup
         android:id="@+id/rg_quality"
@@ -149,19 +149,19 @@
             android:id="@+id/r_hd"
             android:layout_width="71dp"
             android:layout_height="39dp"
-            android:text="HD"/>
+            android:text="HD" />
 
         <RadioButton
             android:id="@+id/r_hq"
             android:layout_width="71dp"
             android:layout_height="39dp"
-            android:text="HQ"/>
+            android:text="HQ" />
 
         <RadioButton
             android:id="@+id/r_lq"
             android:layout_width="71dp"
             android:layout_height="39dp"
-            android:text="LQ"/>
+            android:text="LQ" />
     </RadioGroup>
 
     <TextView
@@ -172,7 +172,7 @@
         app:layout_constraintLeft_toLeftOf="@+id/rg_quality"
         app:layout_constraintTop_toBottomOf="@+id/rg_quality"
         tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <RadioGroup
         android:id="@+id/rg_epg"
@@ -188,13 +188,13 @@
             android:id="@+id/r_full"
             android:layout_width="71dp"
             android:layout_height="39dp"
-            android:text="Full"/>
+            android:text="Full" />
 
         <RadioButton
             android:id="@+id/r_lite"
             android:layout_width="71dp"
             android:layout_height="39dp"
-            android:text="Lite"/>
+            android:text="Lite" />
     </RadioGroup>
 
     <Button
@@ -208,7 +208,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <Button
         android:id="@+id/b_exit"
@@ -221,7 +221,7 @@
         app:layout_constraintTop_toBottomOf="@+id/b_save"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintTop_creator="1" />
 
     <TextView
         android:id="@+id/tv_version"
@@ -230,10 +230,10 @@
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
-        android:text="v1.1.3"
+        android:text="v1.1.4"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintRight_creator="1"/>
+        tools:layout_constraintRight_creator="1" />
 
 </android.support.constraint.ConstraintLayout>

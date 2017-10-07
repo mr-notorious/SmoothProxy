@@ -111,7 +111,7 @@ class SmoothProxy extends NanoHTTPD {
         if (map != null) for (String key : map.keySet()) {
             JsonObject jO = map.getAsJsonObject(key);
 
-            String id = jO.getAsJsonPrimitive("zap2it").getAsString();
+            String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
             String ch = jO.getAsJsonPrimitive("channum").getAsString();
             String icon = jO.getAsJsonPrimitive("icon").getAsString();
             String name = jO.getAsJsonPrimitive("channame").getAsString();
