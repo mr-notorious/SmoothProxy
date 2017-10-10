@@ -27,40 +27,53 @@ package com.notorious.smoothproxy;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.ResponseBody;
 
 class Utils {
-    static String encoder(String value) {
+    static String encoder(String s) {
         try {
-            return URLEncoder.encode(value, "UTF-8");
+            return URLEncoder.encode(s, "UTF-8");
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    static JsonObject getJson(String url) {
+    static JsonObject getJsonObject(String url) {
         try {
-            return new Gson().fromJson(
-                    new OkHttpClient.Builder()
-                            .connectTimeout(30, TimeUnit.SECONDS)
-                            .readTimeout(30, TimeUnit.SECONDS)
-                            .writeTimeout(30, TimeUnit.SECONDS)
-                            .build()
-                            .newCall(new Request.Builder()
-                                    .url(new URL(url))
-                                    .build())
-                            .execute()
-                            .body()
-                            .string(), JsonObject.class);
+            return new Gson().fromJson(getResponseBody(url).string(), JsonObject.class);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    static InputStream getInputStream(String url) {
+        try {
+            return getResponseBody(url).byteStream();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static ResponseBody getResponseBody(String url) throws Exception {
+        return new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .build()
+                .newCall(new Request.Builder()
+                        .url(new URL(url))
+                        .build())
+                .execute()
+                .body();
     }
 }

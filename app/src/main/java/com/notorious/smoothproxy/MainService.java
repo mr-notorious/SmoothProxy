@@ -34,8 +34,6 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 
-import java.io.IOException;
-
 public class MainService extends Service implements Pipe {
     private final SmoothProxy proxy = new SmoothProxy("127.0.0.1", 8888, this);
     private final IBinder binder = new LocalBinder();
@@ -45,7 +43,7 @@ public class MainService extends Service implements Pipe {
         try {
             proxy.start();
             startForeground(1, getNotification("Ready to serve."));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             stopSelf();
         }
@@ -84,8 +82,7 @@ public class MainService extends Service implements Pipe {
                 preferences.getString("password", null),
                 preferences.getString("service", null),
                 preferences.getString("server", null),
-                preferences.getInt("quality", R.id.r_hd) - R.id.r_hd + 1,
-                preferences.getInt("epg", R.id.r_full) == R.id.r_full
+                preferences.getInt("quality", R.id.r_hd) - R.id.r_hd + 1
         );
     }
 

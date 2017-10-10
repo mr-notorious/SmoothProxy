@@ -164,39 +164,6 @@
             android:text="LQ" />
     </RadioGroup>
 
-    <TextView
-        android:id="@+id/tv_epg"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Epg"
-        app:layout_constraintLeft_toLeftOf="@+id/rg_quality"
-        app:layout_constraintTop_toBottomOf="@+id/rg_quality"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1" />
-
-    <RadioGroup
-        android:id="@+id/rg_epg"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintLeft_toLeftOf="@+id/tv_epg"
-        app:layout_constraintTop_toBottomOf="@+id/tv_epg"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1">
-
-        <RadioButton
-            android:id="@+id/r_full"
-            android:layout_width="71dp"
-            android:layout_height="39dp"
-            android:text="Full" />
-
-        <RadioButton
-            android:id="@+id/r_lite"
-            android:layout_width="71dp"
-            android:layout_height="39dp"
-            android:text="Lite" />
-    </RadioGroup>
-
     <Button
         android:id="@+id/b_save"
         android:layout_width="wrap_content"
@@ -230,7 +197,7 @@
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
-        android:text="v1.1.4"
+        android:text="v1.2.0"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         tools:layout_constraintBottom_creator="1"
