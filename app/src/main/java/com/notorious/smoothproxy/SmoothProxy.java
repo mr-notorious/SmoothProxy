@@ -79,18 +79,14 @@ class SmoothProxy extends NanoHTTPD {
             } else {
                 pipe.setNotification("Now serving: Channel " + ch.get(0));
                 path = String.format("https://%s.smoothstreams.tv/%s/ch%sq%s.stream", server, service, ch.get(0), quality);
-                res = newChunkedResponse(Response.Status.OK, "application/vnd.apple.mpegurl", Utils.getInputStream(path + String.format("%s?wmsAuthSign=%s", uri, getAuth())));
+                res = newChunkedResponse(Response.Status.OK, "application/vnd.apple.mpegurl", Utils.getInputStream(String.format("%s%s?wmsAuthSign=%s", path, uri, getAuth())));
             }
 
         } else if (uri.equals("/chunks.m3u8")) {
-            res = newChunkedResponse(Response.Status.OK, "application/vnd.apple.mpegurl",
-                    Utils.getInputStream(path + String.format("%s?nimblesessionid=%s&wmsAuthSign=%s",
-                            uri, session.getParameters().get("nimblesessionid").get(0), session.getParameters().get("wmsAuthSign").get(0))));
+            res = newChunkedResponse(Response.Status.OK, "application/vnd.apple.mpegurl", Utils.getInputStream(String.format("%s%s?%s", path, uri, session.getQueryParameterString())));
 
-        } else if (uri.startsWith("/l_")) {
-            res = newChunkedResponse(Response.Status.OK, "video/m2ts",
-                    Utils.getInputStream(path + String.format("%s?nimblesessionid=%s&wmsAuthSign=%s",
-                            uri, session.getParameters().get("nimblesessionid").get(0), session.getParameters().get("wmsAuthSign").get(0))));
+        } else if (uri.endsWith(".ts")) {
+            res = newChunkedResponse(Response.Status.OK, "video/m2ts", Utils.getInputStream(String.format("%s%s?%s", path, uri, session.getQueryParameterString())));
         }
         return res;
     }
