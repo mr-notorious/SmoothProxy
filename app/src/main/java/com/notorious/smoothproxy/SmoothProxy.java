@@ -84,11 +84,13 @@ class SmoothProxy extends NanoHTTPD {
 
         } else if (uri.equals("/chunks.m3u8")) {
             res = newChunkedResponse(Response.Status.OK, "application/vnd.apple.mpegurl",
-                    Utils.getInputStream(path + String.format("%s?nimblesessionid=%s&wmsAuthSign=%s", uri, session.getParameters().get("nimblesessionid").get(0), getAuth())));
+                    Utils.getInputStream(path + String.format("%s?nimblesessionid=%s&wmsAuthSign=%s",
+                            uri, session.getParameters().get("nimblesessionid").get(0), session.getParameters().get("wmsAuthSign").get(0))));
 
         } else if (uri.startsWith("/l_")) {
             res = newChunkedResponse(Response.Status.OK, "video/m2ts",
-                    Utils.getInputStream(path + String.format("%s?nimblesessionid=%s&wmsAuthSign=%s", uri, session.getParameters().get("nimblesessionid").get(0), getAuth())));
+                    Utils.getInputStream(path + String.format("%s?nimblesessionid=%s&wmsAuthSign=%s",
+                            uri, session.getParameters().get("nimblesessionid").get(0), session.getParameters().get("wmsAuthSign").get(0))));
         }
         return res;
     }
@@ -119,7 +121,8 @@ class SmoothProxy extends NanoHTTPD {
             String name = jO.getAsJsonPrimitive("channame").getAsString();
             String ch = num.length() == 1 ? "0" + num : num;
 
-            m3u8 += String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n", id, num, name, host, port, ch);
+            m3u8 += String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                    id, num, name, host, port, ch);
         }
         return m3u8;
     }
