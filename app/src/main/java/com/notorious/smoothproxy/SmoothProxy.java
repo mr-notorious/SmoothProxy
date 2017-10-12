@@ -75,6 +75,7 @@ class SmoothProxy extends NanoHTTPD {
             if (ch == null) {
                 pipe.setNotification("Now serving: Playlist");
                 res = newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", getM3U8());
+                res.addHeader("Content-Disposition", "attachment; filename=\"playlist.m3u8\"");
 
             } else {
                 pipe.setNotification("Now serving: Channel " + ch.get(0));
@@ -106,7 +107,7 @@ class SmoothProxy extends NanoHTTPD {
     }
 
     private String getM3U8() {
-        String m3u8 = "#EXTM3U\n";
+        StringBuilder m3u8 = new StringBuilder("#EXTM3U\n");
 
         JsonObject map = Utils.getJsonObject("http://sstv.fog.pt/channels.json");
         if (map != null) for (String key : map.keySet()) {
@@ -117,9 +118,9 @@ class SmoothProxy extends NanoHTTPD {
             String name = jO.getAsJsonPrimitive("channame").getAsString();
             String ch = num.length() == 1 ? "0" + num : num;
 
-            m3u8 += String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    id, num, name, host, port, ch);
+            m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                    id, num, name, host, port, ch));
         }
-        return m3u8;
+        return m3u8.toString();
     }
 }
