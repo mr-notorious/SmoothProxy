@@ -19,7 +19,7 @@ Jack of all trades, master of none when it comes to programming. This is my firs
 ---
 
 ## Instructions
-1. Install and launch SmoothProxy on your Android device. 
+1. Install and launch SmoothProxy on your Android device.
 2. Fill out **[Username]**, **[Password]**, **[Service]**, and **[Server]** fields.
 3. **[Save]** and/or back out of SmoothProxy. Note, **[Exit]** will terminate SmoothProxy.
 ![SmoothProxy Screenshot](https://i.imgur.com/m4lQdTC.png)
@@ -37,15 +37,15 @@ Direct your comments, questions, and concerns to the SmoothStreams forum. Let us
 ---
 
 ## Acknowledgments
-* [@SmoothStreamsTV](https://twitter.com/smoothstreamstv) for the awesome service. 
+* [@SmoothStreamsTV](https://twitter.com/smoothstreamstv) for the awesome service.
 * The community for being awesome testers.
 * Obs for the awesome icon.
 * Fog for the awesome EPG.
 
-## Dependencies 
+## Dependencies
 * [google-gson v2.8.2](https://github.com/google/gson) - JSON string to Java object.
-* [OkHttp v3.9.0](https://github.com/square/okhttp) - Retrieve byte stream data from URL.
-* [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - Lightweight HTTP web server. 
+* [OkHttp v3.9.0](https://github.com/square/okhttp) - Retrieve byte stream from URL.
+* [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - Lightweight HTTP web server.
 
 ## License
 ```
