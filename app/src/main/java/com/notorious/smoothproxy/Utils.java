@@ -28,6 +28,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
@@ -46,18 +47,20 @@ class Utils {
         }
     }
 
-    static JsonObject getJsonObject(String url) {
+    static ByteStream getByteStream(String url) {
         try {
-            return new Gson().fromJson(getResponseBody(url).string(), JsonObject.class);
+            ResponseBody rB = getResponseBody(url);
+            return new ByteStream(rB.byteStream(), rB.contentLength());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    static InputStream getInputStream(String url) {
+    static JsonObject getJsonObject(String url) {
         try {
-            return getResponseBody(url).byteStream();
+            ResponseBody rB = getResponseBody(url);
+            return new Gson().fromJson(new InputStreamReader(rB.byteStream()), JsonObject.class);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -75,5 +78,15 @@ class Utils {
                         .build())
                 .execute()
                 .body();
+    }
+
+    static class ByteStream {
+        final InputStream data;
+        final long size;
+
+        ByteStream(InputStream data, long size) {
+            this.data = data;
+            this.size = size;
+        }
     }
 }

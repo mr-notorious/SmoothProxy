@@ -67,7 +67,7 @@ class SmoothProxy extends NanoHTTPD {
         String uri = session.getUri();
         if (uri.equals("/epg.xml")) {
             pipe.setNotification("Now serving: EPG");
-            res = newChunkedResponse(Response.Status.OK, "application/xml", Utils.getInputStream("http://sstv.fog.pt/feed.xml"));
+            res = getResponse("http://sstv.fog.pt/feed.xml", "application/xml");
 
         } else if (uri.equals("/playlist.m3u8")) {
             List<String> ch = session.getParameters().get("ch");
@@ -75,20 +75,22 @@ class SmoothProxy extends NanoHTTPD {
             if (ch == null) {
                 pipe.setNotification("Now serving: Playlist");
                 res = newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", getM3U8());
-                res.addHeader("Content-Disposition", "attachment; filename=\"playlist.m3u8\"");
 
             } else {
                 pipe.setNotification("Now serving: Channel " + ch.get(0));
                 path = String.format("https://%s.smoothstreams.tv/%s/ch%sq%s.stream", server, service, ch.get(0), quality);
-                res = newChunkedResponse(Response.Status.OK, "application/vnd.apple.mpegurl", Utils.getInputStream(String.format("%s%s?wmsAuthSign=%s", path, uri, getAuth())));
+                res = getResponse(String.format("%s%s?wmsAuthSign=%s", path, uri, getAuth()), "application/vnd.apple.mpegurl");
             }
 
         } else if (uri.equals("/chunks.m3u8")) {
-            res = newChunkedResponse(Response.Status.OK, "application/vnd.apple.mpegurl", Utils.getInputStream(String.format("%s%s?%s", path, uri, session.getQueryParameterString())));
+            res = getResponse(String.format("%s%s?%s", path, uri, session.getQueryParameterString()), "application/vnd.apple.mpegurl");
 
         } else if (uri.endsWith(".ts")) {
-            res = newChunkedResponse(Response.Status.OK, "video/m2ts", Utils.getInputStream(String.format("%s%s?%s", path, uri, session.getQueryParameterString())));
+            res = getResponse(String.format("%s%s?%s", path, uri, session.getQueryParameterString()), "video/m2ts");
         }
+
+        res.addHeader("Access-Control-Allow-Origin", "*");
+        res.addHeader("Accept-Ranges", "byte");
         return res;
     }
 
@@ -122,5 +124,12 @@ class SmoothProxy extends NanoHTTPD {
                     id, num, name, host, port, ch));
         }
         return m3u8.toString();
+    }
+
+    private Response getResponse(String url, String mime) {
+        Utils.ByteStream bS = Utils.getByteStream(url);
+        return bS != null
+                ? newFixedLengthResponse(Response.Status.OK, mime, bS.data, bS.size)
+                : newFixedLengthResponse(Response.Status.NOT_FOUND, mime, "404");
     }
 }
