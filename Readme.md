@@ -11,7 +11,7 @@ SmoothProxy is an on-demand playlist/playback daemon for SmoothStreams, running 
 Kodi is slow, clunky, and leaves much to be desired. Better options exist, however, authentication tokens issued by SmoothStreams are only valid for 4 hours to prevent abuse of service. Traditional playlist generators requires you to manually refresh on expiration. This is not the case for SmoothProxy.
 
 ## How?
-SmoothProxy generates a specialized playlist that 'points' to itself rather than SmoothStreams. When SmoothProxy receives a playback request, it determines the context of the request and responds with a 301 redirect, along with your valid authentication token, to the appropriate SmoothStreams resource. 
+SmoothProxy generates a specialized playlist that 'points' to itself rather than SmoothStreams. When SmoothProxy receives a playback request, it determines the context of the request and fetches the appropriate SmoothStreams resource with your valid authentication token.
 
 ## Who?
 Jack of all trades, master of none when it comes to programming. This is my first shot at Android development, so bare with me.
@@ -43,8 +43,8 @@ Direct your comments, questions, and concerns to the SmoothStreams forum. Let us
 * Fog for the awesome EPG.
 
 ## Dependencies 
-* [google-gson v2.8.1](https://github.com/google/gson) - JSON string to Java object.
-* [OkHttp v3.8.1](https://github.com/square/okhttp) - Retrieve JSON string from URL.
+* [google-gson v2.8.2](https://github.com/google/gson) - JSON string to Java object.
+* [OkHttp v3.9.0](https://github.com/square/okhttp) - Retrieve byte stream data from URL.
 * [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - Lightweight HTTP web server. 
 
 ## License
