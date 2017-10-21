@@ -34,7 +34,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 
-public class MainService extends Service implements Pipe {
+public class MainService extends Service implements Ipc {
     private final SmoothProxy proxy = new SmoothProxy("127.0.0.1", 8888, this);
     private final IBinder binder = new LocalBinder();
 

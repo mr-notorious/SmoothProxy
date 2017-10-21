@@ -24,6 +24,6 @@
 
 package com.notorious.smoothproxy;
 
-interface Pipe {
+interface Ipc {
     void setNotification(String text);
 }

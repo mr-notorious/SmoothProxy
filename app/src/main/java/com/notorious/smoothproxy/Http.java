@@ -28,7 +28,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +36,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
 
-class Utils {
+final class Http {
     static String encoder(String s) {
         try {
             return URLEncoder.encode(s, "UTF-8");
@@ -47,20 +46,20 @@ class Utils {
         }
     }
 
-    static ByteStream getByteStream(String url) {
+    static Content getContent(String url) {
         try {
             ResponseBody rB = getResponseBody(url);
-            return new ByteStream(rB.byteStream(), rB.contentLength());
+            return new Content(rB.byteStream(), rB.contentLength(), rB.contentType().toString());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    static JsonObject getJsonObject(String url) {
+    static JsonObject getJson(String url) {
         try {
             ResponseBody rB = getResponseBody(url);
-            return new Gson().fromJson(new InputStreamReader(rB.byteStream()), JsonObject.class);
+            return new Gson().fromJson(rB.charStream(), JsonObject.class);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -70,8 +69,8 @@ class Utils {
     private static ResponseBody getResponseBody(String url) throws Exception {
         return new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
                 .build()
                 .newCall(new Request.Builder()
                         .url(new URL(url))
@@ -80,13 +79,15 @@ class Utils {
                 .body();
     }
 
-    static class ByteStream {
-        final InputStream data;
-        final long size;
+    static final class Content {
+        final InputStream response;
+        final long length;
+        final String type;
 
-        ByteStream(InputStream data, long size) {
-            this.data = data;
-            this.size = size;
+        Content(InputStream response, long length, String type) {
+            this.response = response;
+            this.length = length;
+            this.type = type;
         }
     }
 }

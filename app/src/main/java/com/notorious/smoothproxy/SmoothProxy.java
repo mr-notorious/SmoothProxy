@@ -24,30 +24,37 @@
 
 package com.notorious.smoothproxy;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import fi.iki.elonen.NanoHTTPD;
 
-class SmoothProxy extends NanoHTTPD {
+final class SmoothProxy extends NanoHTTPD {
     private final String host;
     private final int port;
-    private final Pipe pipe;
+    private final Ipc ipc;
     private String username;
     private String password;
     private String service;
     private String server;
     private int quality;
-    private String path;
+    private String url;
     private String auth;
     private long time;
 
-    SmoothProxy(String host, int port, Pipe pipe) {
+    SmoothProxy(String host, int port, Ipc ipc) {
         super(host, port);
         this.host = host;
         this.port = port;
-        this.pipe = pipe;
+        this.ipc = ipc;
     }
 
     void init(String username, String password, String service, String server, int quality) {
@@ -64,41 +71,57 @@ class SmoothProxy extends NanoHTTPD {
     public Response serve(IHTTPSession session) {
         Response res = super.serve(session);
 
-        String uri = session.getUri();
-        if (uri.equals("/epg.xml")) {
-            pipe.setNotification("Now serving: EPG");
-            res = getResponse("http://sstv.fog.pt/feed.xml", "application/xml");
+        String msg = null;
 
-        } else if (uri.equals("/playlist.m3u8")) {
+        String path = session.getUri();
+        if (path.endsWith(".ts") || path.equals("/chunks.m3u8")) {
+            res = getResponse(String.format("%s%s?%s", url, path, session.getQueryParameterString()));
+
+        } else if (path.equals("/playlist.m3u8")) {
             List<String> ch = session.getParameters().get("ch");
 
-            if (ch == null) {
-                pipe.setNotification("Now serving: Playlist");
-                res = newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", getM3U8());
+            if (ch != null) {
+                url = String.format("https://%s.smoothstreams.tv/%s/ch%sq%s.stream", server, service, ch.get(0), quality);
+                res = getResponse(String.format("%s%s?wmsAuthSign=%s", url, path, getAuth()));
+                msg = "Channel " + ch.get(0);
 
             } else {
-                pipe.setNotification("Now serving: Channel " + ch.get(0));
-                path = String.format("https://%s.smoothstreams.tv/%s/ch%sq%s.stream", server, service, ch.get(0), quality);
-                res = getResponse(String.format("%s%s?wmsAuthSign=%s", path, uri, getAuth()), "application/vnd.apple.mpegurl");
+                res = getPlaylist();
+                msg = "Playlist";
             }
 
-        } else if (uri.equals("/chunks.m3u8")) {
-            res = getResponse(String.format("%s%s?%s", path, uri, session.getQueryParameterString()), "application/vnd.apple.mpegurl");
+        } else if (path.equals("/sports.m3u8")) {
+            res = getSportsPlaylist();
+            msg = "Sports Playlist";
 
-        } else if (uri.endsWith(".ts")) {
-            res = getResponse(String.format("%s%s?%s", path, uri, session.getQueryParameterString()), "video/m2ts");
+        } else if (path.equals("/epg.xml")) {
+            res = getResponse("http://sstv.fog.pt/feed.xml");
+            msg = "EPG";
+
+        } else if (path.equals("/sports.xml")) {
+            res = getResponse("https://guide.smoothstreams.tv/feed.xml");
+            msg = "Sports EPG";
         }
+
+        if (msg != null) ipc.setNotification("Now serving: " + msg);
 
         res.addHeader("Access-Control-Allow-Origin", "*");
         res.addHeader("Accept-Ranges", "byte");
         return res;
     }
 
+    private Response getResponse(String url) {
+        Http.Content con = Http.getContent(url);
+        return con != null
+                ? newFixedLengthResponse(Response.Status.OK, con.type, con.response, con.length)
+                : newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404 NOT FOUND");
+    }
+
     private String getAuth() {
         long now = System.currentTimeMillis();
         if (auth == null || time < now) {
-            JsonObject jO = Utils.getJsonObject(String.format("https://%s?username=%s&password=%s&site=%s",
-                    service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php", Utils.encoder(username), Utils.encoder(password), service));
+            JsonObject jO = Http.getJson(String.format("https://%s?username=%s&password=%s&site=%s",
+                    service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php", Http.encoder(username), Http.encoder(password), service));
 
             if (jO != null && jO.getAsJsonPrimitive("code").getAsInt() == 1) {
                 auth = jO.getAsJsonPrimitive("hash").getAsString();
@@ -108,28 +131,111 @@ class SmoothProxy extends NanoHTTPD {
         return auth;
     }
 
-    private String getM3U8() {
-        StringBuilder m3u8 = new StringBuilder("#EXTM3U\n");
+    private Response getSportsPlaylist() {
+        StringBuilder out = new StringBuilder("#EXTM3U\n");
 
-        JsonObject map = Utils.getJsonObject("http://sstv.fog.pt/channels.json");
+        List<Channel> channels = new ArrayList<>();
+        Date now = new Date();
+
+        JsonObject map = Http.getJson("https://guide.smoothstreams.tv/feed.json");
         if (map != null) for (String key : map.keySet()) {
             JsonObject jO = map.getAsJsonObject(key);
 
-            String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
-            String num = jO.getAsJsonPrimitive("channum").getAsString();
-            String name = jO.getAsJsonPrimitive("channame").getAsString();
-            String ch = num.length() == 1 ? "0" + num : num;
+            JsonArray jA = jO.getAsJsonArray("items");
+            if (jA != null) for (JsonElement jE : jA) {
+                jO = jE.getAsJsonObject();
 
-            m3u8.append(String.format("#EXTINF:-1 tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    id, num, name, host, port, ch));
+                Date time = Channel.getDate(jO.getAsJsonPrimitive("time").getAsString() + "-0400");
+                if (Channel.isSameDate(now, time)) {
+                    int num = jO.getAsJsonPrimitive("channel").getAsInt();
+                    String name = jO.getAsJsonPrimitive("name").getAsString();
+                    String group = jO.getAsJsonPrimitive("category").getAsString();
+                    String quality = jO.getAsJsonPrimitive("quality").getAsString();
+                    String language = jO.getAsJsonPrimitive("language").getAsString();
+
+                    channels.add(new Channel(num, name, time, group, quality, language));
+                }
+            }
         }
-        return m3u8.toString();
+
+        Collections.sort(channels);
+
+        int sp = 0;
+        for (Channel c : channels) {
+            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s&sp=%s\n",
+                    c.group, c.num, c.num, c, host, port, c.num < 10 ? "0" + c.num : c.num, sp++));
+        }
+
+        return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
     }
 
-    private Response getResponse(String url, String mime) {
-        Utils.ByteStream bS = Utils.getByteStream(url);
-        return bS != null
-                ? newFixedLengthResponse(Response.Status.OK, mime, bS.data, bS.size)
-                : newFixedLengthResponse(Response.Status.NOT_FOUND, mime, "404");
+    private Response getPlaylist() {
+        StringBuilder out = new StringBuilder("#EXTM3U\n");
+
+        JsonObject map = Http.getJson("http://sstv.fog.pt/channels.json");
+        if (map != null) for (String key : map.keySet()) {
+            JsonObject jO = map.getAsJsonObject(key);
+
+            int num = jO.getAsJsonPrimitive("channum").getAsInt();
+            String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
+            String name = jO.getAsJsonPrimitive("channame").getAsString();
+            String group = jO.getAsJsonPrimitive("247").getAsInt() == 1 ? "24/7" : "Empty";
+
+            out.append(String.format("#EXTINF:-1 group-title=\"%s Channels\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                    group, id, num, name, host, port, num < 10 ? "0" + num : num));
+        }
+
+        return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
+    }
+
+    static final class Channel implements Comparable<Channel> {
+        static final SimpleDateFormat DT_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US);
+        static final SimpleDateFormat D_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        static final SimpleDateFormat T_SDF = new SimpleDateFormat("HH:mm", Locale.US);
+
+        final int num;
+        final String name;
+        final Date time;
+        final String group;
+        final String quality;
+        final String language;
+
+        Channel(int num, String name, Date time, String group, String quality, String language) {
+            this.num = num;
+            this.name = name;
+            this.time = time;
+            this.group = group;
+            this.quality = quality;
+            this.language = language;
+        }
+
+        static boolean isSameDate(Date d_1, Date d_2) {
+            return D_SDF.format(d_1).equals(D_SDF.format(d_2));
+        }
+
+        static Date getDate(String s) {
+            try {
+                return DT_SDF.parse(s);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        public int compareTo(Channel c) {
+            int n = group.compareTo(c.group);
+            if (n == 0) n = time.compareTo(c.time);
+            if (n == 0) n = name.compareTo(c.name);
+            if (n == 0) n = num - c.num;
+            return n;
+        }
+
+        @Override
+        public String toString() {
+            boolean q = !quality.isEmpty();
+            boolean l = !language.isEmpty();
+            return T_SDF.format(time) + " | " + name.replace(",", "") + " " + (q || l ? "(" + (q ? quality : "") + (q && l ? "/" : "") + (l ? language : "") + ")" : "").toUpperCase();
+        }
     }
 }
