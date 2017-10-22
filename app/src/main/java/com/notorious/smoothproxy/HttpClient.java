@@ -36,10 +36,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
 
-final class Http {
-    static String encoder(String s) {
+final class HttpClient {
+    static String encode(String text) {
         try {
-            return URLEncoder.encode(s, "UTF-8");
+            return URLEncoder.encode(text, "UTF-8");
         } catch (Exception e) {
             e.printStackTrace();
             return null;

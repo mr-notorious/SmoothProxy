@@ -71,7 +71,7 @@ final class SmoothProxy extends NanoHTTPD {
     public Response serve(IHTTPSession session) {
         Response res = super.serve(session);
 
-        String msg = null;
+        String txt = null;
 
         String path = session.getUri();
         if (path.endsWith(".ts") || path.equals("/chunks.m3u8")) {
@@ -83,27 +83,27 @@ final class SmoothProxy extends NanoHTTPD {
             if (ch != null) {
                 url = String.format("https://%s.smoothstreams.tv/%s/ch%sq%s.stream", server, service, ch.get(0), quality);
                 res = getResponse(String.format("%s%s?wmsAuthSign=%s", url, path, getAuth()));
-                msg = "Channel " + ch.get(0);
+                txt = "Channel " + ch.get(0);
 
             } else {
                 res = getPlaylist();
-                msg = "Playlist";
+                txt = "Playlist";
             }
 
         } else if (path.equals("/sports.m3u8")) {
-            res = getSportsPlaylist();
-            msg = "Sports Playlist";
+            res = getSports();
+            txt = "Playlist";
 
         } else if (path.equals("/epg.xml")) {
             res = getResponse("http://sstv.fog.pt/feed.xml");
-            msg = "EPG";
+            txt = "EPG";
 
         } else if (path.equals("/sports.xml")) {
             res = getResponse("https://guide.smoothstreams.tv/feed.xml");
-            msg = "Sports EPG";
+            txt = "EPG";
         }
 
-        if (msg != null) ipc.setNotification("Now serving: " + msg);
+        if (txt != null) ipc.setNotification("Now serving: " + txt);
 
         res.addHeader("Access-Control-Allow-Origin", "*");
         res.addHeader("Accept-Ranges", "byte");
@@ -111,17 +111,17 @@ final class SmoothProxy extends NanoHTTPD {
     }
 
     private Response getResponse(String url) {
-        Http.Content con = Http.getContent(url);
-        return con != null
-                ? newFixedLengthResponse(Response.Status.OK, con.type, con.response, con.length)
+        HttpClient.Content c = HttpClient.getContent(url);
+        return c != null
+                ? newFixedLengthResponse(Response.Status.OK, c.type, c.response, c.length)
                 : newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404 NOT FOUND");
     }
 
     private String getAuth() {
         long now = System.currentTimeMillis();
         if (auth == null || time < now) {
-            JsonObject jO = Http.getJson(String.format("https://%s?username=%s&password=%s&site=%s",
-                    service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php", Http.encoder(username), Http.encoder(password), service));
+            JsonObject jO = HttpClient.getJson(String.format("https://%s?username=%s&password=%s&site=%s",
+                    service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php", HttpClient.encode(username), HttpClient.encode(password), service));
 
             if (jO != null && jO.getAsJsonPrimitive("code").getAsInt() == 1) {
                 auth = jO.getAsJsonPrimitive("hash").getAsString();
@@ -131,13 +131,13 @@ final class SmoothProxy extends NanoHTTPD {
         return auth;
     }
 
-    private Response getSportsPlaylist() {
+    private Response getSports() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
-        List<Channel> channels = new ArrayList<>();
+        List<Event> events = new ArrayList<>();
         Date now = new Date();
 
-        JsonObject map = Http.getJson("https://guide.smoothstreams.tv/feed.json");
+        JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
         if (map != null) for (String key : map.keySet()) {
             JsonObject jO = map.getAsJsonObject(key);
 
@@ -145,25 +145,25 @@ final class SmoothProxy extends NanoHTTPD {
             if (jA != null) for (JsonElement jE : jA) {
                 jO = jE.getAsJsonObject();
 
-                Date time = Channel.getDate(jO.getAsJsonPrimitive("time").getAsString() + "-0400");
-                if (Channel.isSameDate(now, time)) {
+                Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString() + "-0400");
+                if (Event.isDate(now, time)) {
                     int num = jO.getAsJsonPrimitive("channel").getAsInt();
                     String name = jO.getAsJsonPrimitive("name").getAsString();
                     String group = jO.getAsJsonPrimitive("category").getAsString();
                     String quality = jO.getAsJsonPrimitive("quality").getAsString();
                     String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                    channels.add(new Channel(num, name, time, group, quality, language));
+                    events.add(new Event(num, name, time, group, quality, language));
                 }
             }
         }
 
-        Collections.sort(channels);
+        Collections.sort(events);
 
-        int sp = 0;
-        for (Channel c : channels) {
-            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s&sp=%s\n",
-                    c.group, c.num, c.num, c, host, port, c.num < 10 ? "0" + c.num : c.num, sp++));
+        int nonce = 0;
+        for (Event e : events) {
+            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s&nonce=%s\n",
+                    e.group, e.num, e.num, e, host, port, e.num < 10 ? "0" + e.num : e.num, nonce++));
         }
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
@@ -172,23 +172,23 @@ final class SmoothProxy extends NanoHTTPD {
     private Response getPlaylist() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
-        JsonObject map = Http.getJson("http://sstv.fog.pt/channels.json");
+        JsonObject map = HttpClient.getJson("http://sstv.fog.pt/channels.json");
         if (map != null) for (String key : map.keySet()) {
             JsonObject jO = map.getAsJsonObject(key);
 
             int num = jO.getAsJsonPrimitive("channum").getAsInt();
             String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
             String name = jO.getAsJsonPrimitive("channame").getAsString();
-            String group = jO.getAsJsonPrimitive("247").getAsInt() == 1 ? "24/7" : "Empty";
+            String group = jO.getAsJsonPrimitive("247").getAsInt() == 1 ? "24/7 Channels" : "Empty Channels";
 
-            out.append(String.format("#EXTINF:-1 group-title=\"%s Channels\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
                     group, id, num, name, host, port, num < 10 ? "0" + num : num));
         }
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
     }
 
-    static final class Channel implements Comparable<Channel> {
+    static final class Event implements Comparable<Event> {
         static final SimpleDateFormat DT_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US);
         static final SimpleDateFormat D_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         static final SimpleDateFormat T_SDF = new SimpleDateFormat("HH:mm", Locale.US);
@@ -200,7 +200,7 @@ final class SmoothProxy extends NanoHTTPD {
         final String quality;
         final String language;
 
-        Channel(int num, String name, Date time, String group, String quality, String language) {
+        Event(int num, String name, Date time, String group, String quality, String language) {
             this.num = num;
             this.name = name;
             this.time = time;
@@ -209,26 +209,26 @@ final class SmoothProxy extends NanoHTTPD {
             this.language = language;
         }
 
-        static boolean isSameDate(Date d_1, Date d_2) {
-            return D_SDF.format(d_1).equals(D_SDF.format(d_2));
-        }
-
-        static Date getDate(String s) {
+        static Date getDate(String text) {
             try {
-                return DT_SDF.parse(s);
+                return DT_SDF.parse(text);
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
             }
         }
 
+        static boolean isDate(Date d_1, Date d_2) {
+            return D_SDF.format(d_1).equals(D_SDF.format(d_2));
+        }
+
         @Override
-        public int compareTo(Channel c) {
-            int n = group.compareTo(c.group);
-            if (n == 0) n = time.compareTo(c.time);
-            if (n == 0) n = name.compareTo(c.name);
-            if (n == 0) n = num - c.num;
-            return n;
+        public int compareTo(Event e) {
+            int c = group.compareTo(e.group);
+            if (c == 0) c = time.compareTo(e.time);
+            if (c == 0) c = name.compareTo(e.name);
+            if (c == 0) c = num - e.num;
+            return c;
         }
 
         @Override
