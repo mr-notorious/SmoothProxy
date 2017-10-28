@@ -33,6 +33,7 @@ import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.text.format.DateFormat;
 
 public class MainService extends Service implements Ipc {
     private final SmoothProxy proxy = new SmoothProxy("127.0.0.1", 8888, this);
@@ -59,6 +60,11 @@ public class MainService extends Service implements Ipc {
     public void onDestroy() {
         proxy.stop();
         stopForeground(true);
+    }
+
+    @Override
+    public String getPattern() {
+        return DateFormat.is24HourFormat(this) ? "HH:mm" : "hh:mm a";
     }
 
     @Override

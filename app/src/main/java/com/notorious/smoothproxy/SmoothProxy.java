@@ -131,6 +131,25 @@ final class SmoothProxy extends NanoHTTPD {
         return auth;
     }
 
+    private Response getPlaylist() {
+        StringBuilder out = new StringBuilder("#EXTM3U\n");
+
+        JsonObject map = HttpClient.getJson("http://sstv.fog.pt/channels.json");
+        if (map != null) for (String key : map.keySet()) {
+            JsonObject jO = map.getAsJsonObject(key);
+
+            int num = jO.getAsJsonPrimitive("channum").getAsInt();
+            String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
+            String name = jO.getAsJsonPrimitive("channame").getAsString();
+            String group = jO.getAsJsonPrimitive("247").getAsInt() == 1 ? "24/7 Channels" : "Empty Channels";
+
+            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                    group, id, num, name, host, port, num < 10 ? "0" + num : num));
+        }
+
+        return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
+    }
+
     private Response getSports() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
@@ -153,45 +172,26 @@ final class SmoothProxy extends NanoHTTPD {
                     String quality = jO.getAsJsonPrimitive("quality").getAsString();
                     String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                    events.add(new Event(num, name, time, group, quality, language));
+                    events.add(new Event(num, name, time, !group.isEmpty() ? group : "N/A", quality, language));
                 }
             }
         }
 
-        Collections.sort(events);
-
         int nonce = 0;
+        Collections.sort(events);
+        String pattern = ipc.getPattern();
+
         for (Event e : events) {
             out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s&nonce=%s\n",
-                    e.group, e.num, e.num, e, host, port, e.num < 10 ? "0" + e.num : e.num, nonce++));
-        }
-
-        return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
-    }
-
-    private Response getPlaylist() {
-        StringBuilder out = new StringBuilder("#EXTM3U\n");
-
-        JsonObject map = HttpClient.getJson("http://sstv.fog.pt/channels.json");
-        if (map != null) for (String key : map.keySet()) {
-            JsonObject jO = map.getAsJsonObject(key);
-
-            int num = jO.getAsJsonPrimitive("channum").getAsInt();
-            String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
-            String name = jO.getAsJsonPrimitive("channame").getAsString();
-            String group = jO.getAsJsonPrimitive("247").getAsInt() == 1 ? "24/7 Channels" : "Empty Channels";
-
-            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    group, id, num, name, host, port, num < 10 ? "0" + num : num));
+                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num < 10 ? "0" + e.num : e.num, nonce++));
         }
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
     }
 
     static final class Event implements Comparable<Event> {
-        static final SimpleDateFormat DT_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US);
-        static final SimpleDateFormat D_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        static final SimpleDateFormat T_SDF = new SimpleDateFormat("HH:mm", Locale.US);
+        static final SimpleDateFormat IN_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US);
+        static final SimpleDateFormat OUT_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
         final int num;
         final String name;
@@ -211,7 +211,7 @@ final class SmoothProxy extends NanoHTTPD {
 
         static Date getDate(String text) {
             try {
-                return DT_SDF.parse(text);
+                return IN_SDF.parse(text);
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
@@ -219,23 +219,23 @@ final class SmoothProxy extends NanoHTTPD {
         }
 
         static boolean isDate(Date d_1, Date d_2) {
-            return D_SDF.format(d_1).equals(D_SDF.format(d_2));
+            return OUT_SDF.format(d_1).equals(OUT_SDF.format(d_2));
+        }
+
+        String getEvent(String pattern) {
+            boolean q = !quality.isEmpty();
+            boolean l = !language.isEmpty();
+            return new SimpleDateFormat(pattern, Locale.US).format(time) + " | " + name.replace(",", "") + " "
+                    + (q || l ? "(" + (q ? quality : "") + (q && l ? "/" : "") + (l ? language : "") + ")" : "").toUpperCase();
         }
 
         @Override
         public int compareTo(Event e) {
-            int c = group.compareTo(e.group);
+            int c = !group.equals("N/A") ? group.compareTo(e.group) : -1;
             if (c == 0) c = time.compareTo(e.time);
             if (c == 0) c = name.compareTo(e.name);
             if (c == 0) c = num - e.num;
             return c;
-        }
-
-        @Override
-        public String toString() {
-            boolean q = !quality.isEmpty();
-            boolean l = !language.isEmpty();
-            return T_SDF.format(time) + " | " + name.replace(",", "") + " " + (q || l ? "(" + (q ? quality : "") + (q && l ? "/" : "") + (l ? language : "") + ")" : "").toUpperCase();
         }
     }
 }

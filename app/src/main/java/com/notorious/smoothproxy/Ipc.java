@@ -25,5 +25,7 @@
 package com.notorious.smoothproxy;
 
 interface Ipc {
+    String getPattern();
+
     void setNotification(String text);
 }
