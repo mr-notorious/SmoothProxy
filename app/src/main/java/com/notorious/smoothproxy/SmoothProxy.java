@@ -231,7 +231,7 @@ final class SmoothProxy extends NanoHTTPD {
 
         @Override
         public int compareTo(Event e) {
-            int c = !group.equals("N/A") ? group.compareTo(e.group) : -1;
+            int c = !group.equals("N/A") ? group.compareTo(e.group) : 1;
             if (c == 0) c = time.compareTo(e.time);
             if (c == 0) c = name.compareTo(e.name);
             if (c == 0) c = num - e.num;
