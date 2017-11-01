@@ -140,7 +140,7 @@ final class SmoothProxy extends NanoHTTPD {
 
             int num = jO.getAsJsonPrimitive("channum").getAsInt();
             String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
-            String name = jO.getAsJsonPrimitive("channame").getAsString();
+            String name = jO.getAsJsonPrimitive("channame").getAsString() + ".";
             String group = jO.getAsJsonPrimitive("247").getAsInt() == 1 ? "24/7 Channels" : "Empty Channels";
 
             out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
