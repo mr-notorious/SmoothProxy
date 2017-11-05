@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import fi.iki.elonen.NanoHTTPD;
 
@@ -164,7 +165,7 @@ final class SmoothProxy extends NanoHTTPD {
             if (jA != null) for (JsonElement jE : jA) {
                 jO = jE.getAsJsonObject();
 
-                Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString() + "-0400");
+                Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
                 if (Event.isDate(now, time)) {
                     int num = jO.getAsJsonPrimitive("channel").getAsInt();
                     String name = jO.getAsJsonPrimitive("name").getAsString();
@@ -190,8 +191,9 @@ final class SmoothProxy extends NanoHTTPD {
     }
 
     static final class Event implements Comparable<Event> {
-        static final SimpleDateFormat IN_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US);
+        static final SimpleDateFormat IN_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         static final SimpleDateFormat OUT_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        static final TimeZone NY_TZ = TimeZone.getTimeZone("America/New_York");
 
         final int num;
         final String name;
@@ -211,6 +213,7 @@ final class SmoothProxy extends NanoHTTPD {
 
         static Date getDate(String text) {
             try {
+                IN_SDF.setTimeZone(NY_TZ);
                 return IN_SDF.parse(text);
             } catch (Exception e) {
                 e.printStackTrace();
