@@ -95,7 +95,7 @@ final class SmoothProxy extends NanoHTTPD {
             txt = "Playlist";
 
         } else if (path.equals("/epg.xml")) {
-            res = getResponse("http://sstv.fog.pt/feed.xml");
+            res = getResponse("https://sstv.fog.pt/epg/xmltv1.xml");
             txt = "EPG";
 
         } else if (path.equals("/sports.xml")) {
@@ -134,7 +134,7 @@ final class SmoothProxy extends NanoHTTPD {
     private Response getPlaylist() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
-        JsonObject map = HttpClient.getJson("http://sstv.fog.pt/channels.json");
+        JsonObject map = HttpClient.getJson("https://sstv.fog.pt/epg/channels.json");
         if (map != null) for (String key : map.keySet()) {
             JsonObject jO = map.getAsJsonObject(key);
 
@@ -172,7 +172,7 @@ final class SmoothProxy extends NanoHTTPD {
                     String quality = jO.getAsJsonPrimitive("quality").getAsString();
                     String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                    events.add(new Event(num, name, time, !group.isEmpty() ? group : "N/A", quality, language));
+                    events.add(new Event(num, name, time, !group.isEmpty() ? group : "~UNKNOWN", quality, language));
                 }
             }
         }
@@ -231,7 +231,7 @@ final class SmoothProxy extends NanoHTTPD {
 
         @Override
         public int compareTo(Event e) {
-            int c = !group.equals("N/A") ? group.compareTo(e.group) : 1;
+            int c = group.compareTo(e.group);
             if (c == 0) c = time.compareTo(e.time);
             if (c == 0) c = name.compareTo(e.name);
             if (c == 0) c = num - e.num;
