@@ -71,7 +71,6 @@ final class SmoothProxy extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         Response res = super.serve(session);
-
         String txt = null;
 
         String path = session.getUri();
@@ -105,9 +104,7 @@ final class SmoothProxy extends NanoHTTPD {
         }
 
         if (txt != null) ipc.setNotification("Now serving: " + txt);
-
         res.addHeader("Access-Control-Allow-Origin", "*");
-        res.addHeader("Accept-Ranges", "byte");
         return res;
     }
 
@@ -153,7 +150,6 @@ final class SmoothProxy extends NanoHTTPD {
 
     private Response getSports() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
-
         List<Event> events = new ArrayList<>();
         Date now = new Date();
 
