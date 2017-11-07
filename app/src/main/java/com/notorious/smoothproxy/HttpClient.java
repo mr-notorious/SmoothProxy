@@ -28,7 +28,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import java.io.InputStream;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +36,12 @@ import okhttp3.Request;
 import okhttp3.ResponseBody;
 
 final class HttpClient {
+    private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build();
+
     static String encode(String text) {
         try {
             return URLEncoder.encode(text, "UTF-8");
@@ -67,16 +72,7 @@ final class HttpClient {
     }
 
     private static ResponseBody getResponseBody(String url) throws Exception {
-        return new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build()
-                .newCall(new Request.Builder()
-                        .url(new URL(url))
-                        .build())
-                .execute()
-                .body();
+        return CLIENT.newCall(new Request.Builder().url(url).build()).execute().body();
     }
 
     static final class Content {
