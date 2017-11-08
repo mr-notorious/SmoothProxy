@@ -187,9 +187,9 @@ final class SmoothProxy extends NanoHTTPD {
     }
 
     static final class Event implements Comparable<Event> {
-        static final SimpleDateFormat IN_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-        static final SimpleDateFormat OUT_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        static final TimeZone NY_TZ = TimeZone.getTimeZone("America/New_York");
+        private static final SimpleDateFormat IN_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+        private static final SimpleDateFormat OUT_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        private static final TimeZone NY_TZ = TimeZone.getTimeZone("America/New_York");
 
         final int num;
         final String name;
