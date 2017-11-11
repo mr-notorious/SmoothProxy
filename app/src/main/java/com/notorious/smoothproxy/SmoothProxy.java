@@ -112,7 +112,7 @@ final class SmoothProxy extends NanoHTTPD {
         HttpClient.Content c = HttpClient.getContent(url);
         return c != null
                 ? newFixedLengthResponse(Response.Status.OK, c.type, c.response, c.length)
-                : newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404 NOT FOUND");
+                : newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "HTTP/1.1 404 NOT FOUND");
     }
 
     private String getAuth() {
