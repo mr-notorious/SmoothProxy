@@ -28,9 +28,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import org.dom4j.Document;
-import org.dom4j.Node;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,7 +81,7 @@ final class SmoothProxy extends NanoHTTPD {
             List<String> ch = session.getParameters().get("ch");
 
             if (ch != null) {
-                url = String.format("https://%s.smoothstreams.tv/%s/ch%sq%s.stream", server, service, ch.get(0), quality);
+                url = String.format("https://%s.smoothstreams.tv/%s/ch%sq%s.stream", server, service, ch.get(0), Integer.parseInt(ch.get(0)) < 61 ? quality : 1);
                 res = getResponse(String.format("%s%s?wmsAuthSign=%s", url, path, getAuth()));
                 txt = "Channel " + ch.get(0);
 
@@ -97,8 +94,8 @@ final class SmoothProxy extends NanoHTTPD {
             res = getSports();
             txt = "Playlist";
 
-        } else if (path.equals("/epg.xml")) {
-            res = getResponse("https://sstv.fog.pt/epg/xmltv1.xml");
+        } else if (path.equals("/epg.xml.gz")) {
+            res = getResponse("https://sstv.fog.pt/epg/xmltv1.xml.gz");
             txt = "EPG";
 
         } else if (path.equals("/sports.xml")) {
@@ -135,32 +132,28 @@ final class SmoothProxy extends NanoHTTPD {
     private Response getPlaylist() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
-        JsonObject json = HttpClient.getJson("https://sstv.fog.pt/epg/channels.json");
-        if (json != null) {
-            for (String key : json.keySet()) {
-                JsonObject jO = json.getAsJsonObject(key);
+        JsonObject map = HttpClient.getJson("https://sstv.fog.pt/epg/channels.json");
+        if (map != null) for (String key : map.keySet()) {
+            JsonObject jO = map.getAsJsonObject(key);
 
-                int num = jO.getAsJsonPrimitive("channum").getAsInt();
-                String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
-                String name = jO.getAsJsonPrimitive("channame").getAsString() + ".";
-                String group = jO.getAsJsonPrimitive("247").getAsInt() == 1 ? "24/7 Channels" : "Empty Channels";
+            int group = jO.getAsJsonPrimitive("247").getAsInt();
+            int num = jO.getAsJsonPrimitive("channum").getAsInt();
+            String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
+            String name = jO.getAsJsonPrimitive("channame").getAsString() + ".";
+
+            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                    group == 1 ? "24/7 Channels" : "Empty Channels", id, num, name, host, port, num < 10 ? "0" + num : num));
+
+        } else {
+            map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
+            if (map != null) for (String key : map.keySet()) {
+                JsonObject jO = map.getAsJsonObject(key);
+
+                int num = jO.getAsJsonPrimitive("channel_id").getAsInt();
+                String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
 
                 out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                        group, id, num, name, host, port, num < 10 ? "0" + num : num));
-            }
-        } else {
-            Document xml = HttpClient.getXml("https://guide.smoothstreams.tv/feed.xml");
-            if (xml != null) {
-                for (Node n : xml.selectNodes("//tv/channel")) {
-
-                    int num = Integer.parseInt(n.valueOf("@id"));
-                    String name = n.valueOf("display-name").trim();
-                    if (name.isEmpty()) name = "Channel " + num;
-                    String group = num <= 60 ? "24/7 Channels" : "Empty Channels";
-
-                    out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                            group, num, num, name, host, port, num < 10 ? "0" + num : num));
-                }
+                        num < 61 ? "24/7 Channels" : "Empty Channels", num, num, !name.isEmpty() ? name : "Channel " + num, host, port, num < 10 ? "0" + num : num));
             }
         }
 
@@ -172,27 +165,23 @@ final class SmoothProxy extends NanoHTTPD {
         List<Event> events = new ArrayList<>();
         Date now = new Date();
 
-        JsonObject json = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
-        if (json != null) {
-            for (String key : json.keySet()) {
-                JsonObject jO = json.getAsJsonObject(key);
+        JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
+        if (map != null) for (String key : map.keySet()) {
+            JsonObject jO = map.getAsJsonObject(key);
 
-                JsonArray jA = jO.getAsJsonArray("items");
-                if (jA != null) {
-                    for (JsonElement jE : jA) {
-                        jO = jE.getAsJsonObject();
+            JsonArray jA = jO.getAsJsonArray("items");
+            if (jA != null) for (JsonElement jE : jA) {
+                jO = jE.getAsJsonObject();
 
-                        Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
-                        if (Event.isDate(now, time)) {
-                            int num = jO.getAsJsonPrimitive("channel").getAsInt();
-                            String name = jO.getAsJsonPrimitive("name").getAsString();
-                            String group = jO.getAsJsonPrimitive("category").getAsString();
-                            String quality = jO.getAsJsonPrimitive("quality").getAsString();
-                            String language = jO.getAsJsonPrimitive("language").getAsString();
+                Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
+                if (Event.isDate(now, time)) {
+                    int num = jO.getAsJsonPrimitive("channel").getAsInt();
+                    String name = jO.getAsJsonPrimitive("name").getAsString();
+                    String group = jO.getAsJsonPrimitive("category").getAsString();
+                    String quality = jO.getAsJsonPrimitive("quality").getAsString();
+                    String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                            events.add(new Event(num, name, time, !group.isEmpty() ? group : "~UNKNOWN", quality, language));
-                        }
-                    }
+                    events.add(new Event(num, name, time, !group.isEmpty() ? group : "~UNKNOWN", quality, language));
                 }
             }
         }
@@ -203,7 +192,7 @@ final class SmoothProxy extends NanoHTTPD {
 
         for (Event e : events) {
             out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s&nonce=%s\n",
-                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num < 10 ? "0" + e.num : e.num, nonce++));
+                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num < 10 ? "0" + e.num : e.num, ++nonce));
         }
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());

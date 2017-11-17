@@ -5,16 +5,13 @@
 ---
 
 ## What?
-SmoothProxy is an on-demand playlist/playback daemon for SmoothStreams, running on Android (4.0+).
+SmoothProxy is an on-demand playlist/playback daemon for SmoothStreams (Android 4.0+).
 
 ## Why?
 Kodi is slow, clunky, and leaves much to be desired. Better options exist, however, authentication tokens issued by SmoothStreams are only valid for 4 hours to prevent abuse of service. Traditional playlist generators requires you to manually refresh on expiration. This is not the case for SmoothProxy.
 
 ## How?
 SmoothProxy generates a specialized playlist that 'points' to itself rather than SmoothStreams. When SmoothProxy receives a playback request, it determines the context of the request and fetches the appropriate SmoothStreams resource with your valid authentication token.
-
-## Who?
-Jack of all trades, master of none when it comes to programming. This is my first shot at Android development, so bare with me.
 
 ---
 
@@ -25,27 +22,21 @@ Jack of all trades, master of none when it comes to programming. This is my firs
 ![SmoothProxy Screenshot](https://i.imgur.com/m4lQdTC.png)
 4. To connect SmoothProxy with an IPTV player of your choosing, use the following URLs in verbatim:
     * Playlist URL: **http://localhost:8888/playlist.m3u8**
-    * EPG URL: **http://localhost:8888/epg.xml**
+    * EPG URL: **http://localhost:8888/epg.xml.gz**
 5. *Enjoy!*
 
 ## Warning
 At this time, SmoothProxy is barebones. It is guaranteed to break on the stupidest of reasons. If want to avoid unnecessary frustrations, refrain yourself from using SmoothProxy.
 
 ## Feedback
-Direct your comments, questions, and concerns to the SmoothStreams forum. Let us keep it within the community. SmoothProxy is not endorsed by SmoothStreams, so do not bother the staff.
+Keep it within the community. Direct your feedback to the SmoothStreams forum. SmoothProxy is not endorsed by SmoothStreams and I am not affiliated with SmoothStreams.
 
 ---
 
-## Acknowledgments
-* [@SmoothStreamsTV](https://twitter.com/smoothstreamstv) for the awesome service.
-* The community for being awesome testers.
-* Obs for the awesome icon.
-* Fog for the awesome EPG.
-
 ## Dependencies
-* [google-gson v2.8.2](https://github.com/google/gson) - JSON string to Java object.
-* [OkHttp v3.9.0](https://github.com/square/okhttp) - Retrieve byte stream from URL.
-* [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - Lightweight HTTP web server.
+* [google-gson v2.8.2](https://github.com/google/gson) - Json parser.
+* [OkHttp v3.9.0](https://github.com/square/okhttp) - HTTP client.
+* [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - HTTP server.
 
 ## License
 ```

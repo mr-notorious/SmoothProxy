@@ -27,15 +27,7 @@ package com.notorious.smoothproxy;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import org.dom4j.Document;
-import org.dom4j.io.SAXReader;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +36,6 @@ import okhttp3.Request;
 import okhttp3.ResponseBody;
 
 final class HttpClient {
-    private static final SAXReader READER = new SAXReader();
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -74,21 +65,6 @@ final class HttpClient {
         try {
             ResponseBody rB = getResponseBody(url);
             return new Gson().fromJson(rB.charStream(), JsonObject.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    static Document getXml(String url) {
-        try {
-            READER.setEntityResolver(new EntityResolver() {
-                @Override
-                public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-                    return systemId.contains("xmltv.dtd") ? new InputSource(new StringReader("")) : null;
-                }
-            });
-            return READER.read(url);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
