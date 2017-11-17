@@ -28,6 +28,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import org.dom4j.Document;
+import org.dom4j.Node;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -132,17 +135,33 @@ final class SmoothProxy extends NanoHTTPD {
     private Response getPlaylist() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
-        JsonObject map = HttpClient.getJson("https://sstv.fog.pt/epg/channels.json");
-        if (map != null) for (String key : map.keySet()) {
-            JsonObject jO = map.getAsJsonObject(key);
+        JsonObject json = HttpClient.getJson("https://sstv.fog.pt/epg/channels.json");
+        if (json != null) {
+            for (String key : json.keySet()) {
+                JsonObject jO = json.getAsJsonObject(key);
 
-            int num = jO.getAsJsonPrimitive("channum").getAsInt();
-            String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
-            String name = jO.getAsJsonPrimitive("channame").getAsString() + ".";
-            String group = jO.getAsJsonPrimitive("247").getAsInt() == 1 ? "24/7 Channels" : "Empty Channels";
+                int num = jO.getAsJsonPrimitive("channum").getAsInt();
+                String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
+                String name = jO.getAsJsonPrimitive("channame").getAsString() + ".";
+                String group = jO.getAsJsonPrimitive("247").getAsInt() == 1 ? "24/7 Channels" : "Empty Channels";
 
-            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    group, id, num, name, host, port, num < 10 ? "0" + num : num));
+                out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                        group, id, num, name, host, port, num < 10 ? "0" + num : num));
+            }
+        } else {
+            Document xml = HttpClient.getXml("https://guide.smoothstreams.tv/feed.xml");
+            if (xml != null) {
+                for (Node n : xml.selectNodes("//tv/channel")) {
+
+                    int num = Integer.parseInt(n.valueOf("@id"));
+                    String name = n.valueOf("display-name").trim();
+                    if (name.isEmpty()) name = "Channel " + num;
+                    String group = num <= 60 ? "24/7 Channels" : "Empty Channels";
+
+                    out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                            group, num, num, name, host, port, num < 10 ? "0" + num : num));
+                }
+            }
         }
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
@@ -153,23 +172,27 @@ final class SmoothProxy extends NanoHTTPD {
         List<Event> events = new ArrayList<>();
         Date now = new Date();
 
-        JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
-        if (map != null) for (String key : map.keySet()) {
-            JsonObject jO = map.getAsJsonObject(key);
+        JsonObject json = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
+        if (json != null) {
+            for (String key : json.keySet()) {
+                JsonObject jO = json.getAsJsonObject(key);
 
-            JsonArray jA = jO.getAsJsonArray("items");
-            if (jA != null) for (JsonElement jE : jA) {
-                jO = jE.getAsJsonObject();
+                JsonArray jA = jO.getAsJsonArray("items");
+                if (jA != null) {
+                    for (JsonElement jE : jA) {
+                        jO = jE.getAsJsonObject();
 
-                Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
-                if (Event.isDate(now, time)) {
-                    int num = jO.getAsJsonPrimitive("channel").getAsInt();
-                    String name = jO.getAsJsonPrimitive("name").getAsString();
-                    String group = jO.getAsJsonPrimitive("category").getAsString();
-                    String quality = jO.getAsJsonPrimitive("quality").getAsString();
-                    String language = jO.getAsJsonPrimitive("language").getAsString();
+                        Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
+                        if (Event.isDate(now, time)) {
+                            int num = jO.getAsJsonPrimitive("channel").getAsInt();
+                            String name = jO.getAsJsonPrimitive("name").getAsString();
+                            String group = jO.getAsJsonPrimitive("category").getAsString();
+                            String quality = jO.getAsJsonPrimitive("quality").getAsString();
+                            String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                    events.add(new Event(num, name, time, !group.isEmpty() ? group : "~UNKNOWN", quality, language));
+                            events.add(new Event(num, name, time, !group.isEmpty() ? group : "~UNKNOWN", quality, language));
+                        }
+                    }
                 }
             }
         }
