@@ -139,20 +139,21 @@ final class SmoothProxy extends NanoHTTPD {
             int group = jO.getAsJsonPrimitive("247").getAsInt();
             int num = jO.getAsJsonPrimitive("channum").getAsInt();
             String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
-            String name = jO.getAsJsonPrimitive("channame").getAsString() + ".";
+            String name = jO.getAsJsonPrimitive("channame").getAsString().replace("&amp;", "&");
 
-            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
                     group == 1 ? "24/7 Channels" : "Empty Channels", id, num, name, host, port, num < 10 ? "0" + num : num));
 
-        } else {
+        }
+        else {
             map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
             if (map != null) for (String key : map.keySet()) {
                 JsonObject jO = map.getAsJsonObject(key);
 
                 int num = jO.getAsJsonPrimitive("channel_id").getAsInt();
-                String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
+                String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim().replace("&amp;", "&");
 
-                out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
+                out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
                         num < 61 ? "24/7 Channels" : "Empty Channels", num, num, !name.isEmpty() ? name : "Channel " + num, host, port, num < 10 ? "0" + num : num));
             }
         }
