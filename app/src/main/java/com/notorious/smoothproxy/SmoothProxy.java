@@ -39,6 +39,7 @@ import java.util.TimeZone;
 import fi.iki.elonen.NanoHTTPD;
 
 final class SmoothProxy extends NanoHTTPD {
+    private static final String EPG[] = {"https://sstv.fog.pt/epg", "http://ca.epgrepo.download", "http://eu.epgrepo.download"};
     private final String host;
     private final int port;
     private final Ipc ipc;
@@ -50,6 +51,7 @@ final class SmoothProxy extends NanoHTTPD {
     private String url;
     private String auth;
     private long time;
+    private int index;
 
     SmoothProxy(String host, int port, Ipc ipc) {
         super(host, port);
@@ -75,14 +77,14 @@ final class SmoothProxy extends NanoHTTPD {
 
         String path = session.getUri();
         if (path.endsWith(".ts") || path.equals("/chunks.m3u8")) {
-            res = getResponse(String.format("%s%s?%s", url, path, session.getQueryParameterString()));
+            res = getResponse(url + path + "?" + session.getQueryParameterString());
 
         } else if (path.equals("/playlist.m3u8")) {
             List<String> ch = session.getParameters().get("ch");
 
             if (ch != null) {
-                url = String.format("https://%s.smoothstreams.tv/%s/ch%sq%s.stream", server, service, ch.get(0), Integer.parseInt(ch.get(0)) < 61 ? quality : 1);
-                res = getResponse(String.format("%s%s?wmsAuthSign=%s", url, path, getAuth()));
+                url = "https://" + server + ".smoothstreams.tv/" + service + "/ch" + ch.get(0) + "q" + (Integer.parseInt(ch.get(0)) < 61 ? quality : "1") + ".stream";
+                res = getResponse(url + path + "?wmsAuthSign=" + getAuth());
                 txt = "Channel " + ch.get(0);
 
             } else {
@@ -95,7 +97,7 @@ final class SmoothProxy extends NanoHTTPD {
             txt = "Playlist";
 
         } else if (path.equals("/epg.xml.gz")) {
-            res = getResponse("https://sstv.fog.pt/epg/xmltv1.xml.gz");
+            res = getResponse(EPG[index++ % EPG.length] + "/xmltv1.xml.gz");
             txt = "EPG";
 
         } else if (path.equals("/sports.xml")) {
@@ -118,8 +120,8 @@ final class SmoothProxy extends NanoHTTPD {
     private String getAuth() {
         long now = System.currentTimeMillis();
         if (auth == null || time < now) {
-            JsonObject jO = HttpClient.getJson(String.format("https://%s?username=%s&password=%s&site=%s",
-                    service.contains("mma") ? "www.mma-tv.net/loginForm.php" : "auth.smoothstreams.tv/hash_api.php", HttpClient.encode(username), HttpClient.encode(password), service));
+            JsonObject jO = HttpClient.getJson((service.contains("mma") ? "https://www.mma-tv.net/loginForm.php" : "https://auth.smoothstreams.tv/hash_api.php")
+                    + "?username=" + HttpClient.encode(username) + "&password=" + HttpClient.encode(password) + "&site=" + service);
 
             if (jO != null && jO.getAsJsonPrimitive("code").getAsInt() == 1) {
                 auth = jO.getAsJsonPrimitive("hash").getAsString();
@@ -132,7 +134,7 @@ final class SmoothProxy extends NanoHTTPD {
     private Response getPlaylist() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
-        JsonObject map = HttpClient.getJson("https://sstv.fog.pt/epg/channels.json");
+        JsonObject map = HttpClient.getJson(EPG[index++ % EPG.length] + "/channels.json");
         if (map != null) for (String key : map.keySet()) {
             JsonObject jO = map.getAsJsonObject(key);
 
@@ -141,10 +143,10 @@ final class SmoothProxy extends NanoHTTPD {
             String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
             String name = jO.getAsJsonPrimitive("channame").getAsString().replace("&amp;", "&");
 
-            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                    group == 1 ? "24/7 Channels" : "Empty Channels", id, num, name, host, port, num < 10 ? "0" + num : num));
-
-        } else {
+            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
+                    group == 1 ? "24/7 channels" : "Empty channels", id, num, name, host, port, num));
+        }
+        else {
             map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
             if (map != null) for (String key : map.keySet()) {
                 JsonObject jO = map.getAsJsonObject(key);
@@ -152,8 +154,8 @@ final class SmoothProxy extends NanoHTTPD {
                 int num = jO.getAsJsonPrimitive("channel_id").getAsInt();
                 String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim().replace("&amp;", "&");
 
-                out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%s\n",
-                        num < 61 ? "24/7 Channels" : "Empty Channels", num, num, !name.isEmpty() ? name : "Channel " + num, host, port, num < 10 ? "0" + num : num));
+                out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
+                        num < 61 ? "24/7 channels" : "Empty channels", num, num, !name.isEmpty() ? name : "Channel " + num, host, port, num));
             }
         }
 
@@ -191,8 +193,8 @@ final class SmoothProxy extends NanoHTTPD {
         String pattern = ipc.getPattern();
 
         for (Event e : events) {
-            out.append(String.format("#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%s&nonce=%s\n",
-                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num < 10 ? "0" + e.num : e.num, ++nonce));
+            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&nonce=%02d\n",
+                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num, ++nonce));
         }
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
