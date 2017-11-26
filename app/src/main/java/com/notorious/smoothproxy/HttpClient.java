@@ -27,6 +27,8 @@ package com.notorious.smoothproxy;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import org.jsoup.parser.Parser;
+
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +43,10 @@ final class HttpClient {
             .writeTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build();
+
+    static String decode(String text) {
+        return Parser.unescapeEntities(text, false);
+    }
 
     static String encode(String text) {
         try {

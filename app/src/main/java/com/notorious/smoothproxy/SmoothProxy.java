@@ -141,7 +141,7 @@ final class SmoothProxy extends NanoHTTPD {
             int group = jO.getAsJsonPrimitive("247").getAsInt();
             int num = jO.getAsJsonPrimitive("channum").getAsInt();
             String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
-            String name = jO.getAsJsonPrimitive("channame").getAsString().replace("&amp;", "&");
+            String name = HttpClient.decode(jO.getAsJsonPrimitive("channame").getAsString());
 
             out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
                     group == 1 ? "24/7 channels" : "Empty channels", id, num, name, host, port, num));
@@ -152,7 +152,7 @@ final class SmoothProxy extends NanoHTTPD {
                 JsonObject jO = map.getAsJsonObject(key);
 
                 int num = jO.getAsJsonPrimitive("channel_id").getAsInt();
-                String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim().replace("&amp;", "&");
+                String name = HttpClient.decode(jO.getAsJsonPrimitive("name").getAsString().substring(5).trim());
 
                 out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
                         num < 61 ? "24/7 channels" : "Empty channels", num, num, !name.isEmpty() ? name : "Channel " + num, host, port, num));
@@ -178,12 +178,12 @@ final class SmoothProxy extends NanoHTTPD {
                 Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
                 if (Event.isDate(now, time)) {
                     int num = jO.getAsJsonPrimitive("channel").getAsInt();
-                    String name = jO.getAsJsonPrimitive("name").getAsString();
                     String group = jO.getAsJsonPrimitive("category").getAsString();
                     String quality = jO.getAsJsonPrimitive("quality").getAsString();
                     String language = jO.getAsJsonPrimitive("language").getAsString();
+                    String name = HttpClient.decode(jO.getAsJsonPrimitive("name").getAsString());
 
-                    events.add(new Event(num, name, time, !group.isEmpty() ? group : "~UNKNOWN", quality, language));
+                    events.add(new Event(num, name, time, !group.isEmpty() ? group : "~UNKNOWN~", quality, language));
                 }
             }
         }
