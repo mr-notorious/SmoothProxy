@@ -34,7 +34,8 @@ Keep it within the community. Direct your feedback to the SmoothStreams forum. S
 ---
 
 ## Dependencies
-* [google-gson v2.8.2](https://github.com/google/gson) - Json parser.
+* [google-gson v2.8.2](https://github.com/google/gson) - JSON parser.
+* [jsoup v1.11.2](https://github.com/jhy/jsoup) - HTML parser.
 * [OkHttp v3.9.1](https://github.com/square/okhttp) - HTTP client.
 * [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - HTTP server.
 
