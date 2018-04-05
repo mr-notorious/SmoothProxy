@@ -39,7 +39,6 @@ import java.util.TimeZone;
 import fi.iki.elonen.NanoHTTPD;
 
 final class SmoothProxy extends NanoHTTPD {
-    private static final String EPG[] = {"https://sstv.fog.pt/epg", "http://ca.epgrepo.download", "http://eu.epgrepo.download"};
     private final String host;
     private final int port;
     private final Ipc ipc;
@@ -51,7 +50,6 @@ final class SmoothProxy extends NanoHTTPD {
     private String url;
     private String auth;
     private long time;
-    private int index;
 
     SmoothProxy(String host, int port, Ipc ipc) {
         super(host, port);
@@ -83,7 +81,7 @@ final class SmoothProxy extends NanoHTTPD {
             List<String> ch = session.getParameters().get("ch");
 
             if (ch != null) {
-                url = "https://" + server + ".smoothstreams.tv/" + service + "/ch" + ch.get(0) + "q" + (Integer.parseInt(ch.get(0)) < 61 ? quality : "1") + ".stream";
+                url = "https://" + server + ".smoothstreams.tv/" + service + "/ch" + ch.get(0) + "q" + (Integer.parseInt(ch.get(0)) < 61 ? quality : 1) + ".stream";
                 res = getResponse(url + path + "?wmsAuthSign=" + getAuth());
                 txt = "Channel " + ch.get(0);
 
@@ -97,7 +95,7 @@ final class SmoothProxy extends NanoHTTPD {
             txt = "Playlist";
 
         } else if (path.equals("/epg.xml.gz")) {
-            res = getResponse(EPG[index++ % EPG.length] + "/xmltv1.xml.gz");
+            res = getResponse("https://guide.smoothstreams.tv/altepg/xmltv1.xml.gz");
             txt = "EPG";
 
         } else if (path.equals("/sports.xml")) {
@@ -125,7 +123,7 @@ final class SmoothProxy extends NanoHTTPD {
 
             if (jO != null && jO.getAsJsonPrimitive("code").getAsInt() == 1) {
                 auth = jO.getAsJsonPrimitive("hash").getAsString();
-                time = now + 14100000;
+                time = now + 7200000;
             }
         }
         return auth;
@@ -134,7 +132,7 @@ final class SmoothProxy extends NanoHTTPD {
     private Response getPlaylist() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
-        JsonObject map = HttpClient.getJson(EPG[index++ % EPG.length] + "/channels.json");
+        JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/altepg/channels.json");
         if (map != null) for (String key : map.keySet()) {
             JsonObject jO = map.getAsJsonObject(key);
 
