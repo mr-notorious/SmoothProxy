@@ -16,7 +16,7 @@
 5. *Enjoy!*
 
 ## Warning
-At this time, SmoothProxy is barebones. It is guaranteed to break on the stupidest of reasons. If want to avoid unnecessary frustrations, refrain yourself from using SmoothProxy. SmoothProxy is not endorsed by SmoothStreams and I am not affiliated with SmoothStreams.
+At this time, SmoothProxy is barebones. It is guaranteed to break on the stupidest of reasons. If you want to avoid unnecessary frustrations, refrain yourself from using SmoothProxy. SmoothProxy is not endorsed by SmoothStreams and I am not affiliated with SmoothStreams.
 
 ---
 
