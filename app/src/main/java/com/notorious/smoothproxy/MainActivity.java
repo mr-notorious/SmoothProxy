@@ -84,8 +84,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button bExit = (Button) findViewById(R.id.b_exit);
-        bExit.setOnClickListener(new View.OnClickListener() {
+        Button bStop = (Button) findViewById(R.id.b_stop);
+        bStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();

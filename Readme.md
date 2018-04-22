@@ -7,8 +7,8 @@
 ## Instructions
 1. Install and launch SmoothProxy on your Android device.
 2. Fill out **[Username]**, **[Password]**, **[Service]**, and **[Server]** fields.
-3. **[Save]** and/or back out of SmoothProxy. Note, **[Exit]** will terminate SmoothProxy.
-![SmoothProxy Screenshot](https://i.imgur.com/m4lQdTC.png)
+3. **[Save]** and/or back out of SmoothProxy. Note, **[Stop]** will terminate SmoothProxy.
+![SmoothProxy Screenshot](https://i.imgur.com/9CwzSnh.png)
 4. To connect SmoothProxy with an IPTV player of your choosing, use the following URLs in verbatim:
     * Playlist URL: **http://localhost:8888/playlist.m3u8**
     * EPG URL: **http://localhost:8888/epg.xml.gz**
@@ -22,7 +22,7 @@ At this time, SmoothProxy is barebones. It is guaranteed to break on the stupide
 
 ## Dependencies
 * [google-gson v2.8.2](https://github.com/google/gson) - JSON parser.
-* [jsoup v1.11.2](https://github.com/jhy/jsoup) - HTML parser.
+* [jsoup v1.11.3](https://github.com/jhy/jsoup) - HTML parser.
 * [OkHttp v3.10.0](https://github.com/square/okhttp) - HTTP client.
 * [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - HTTP server.
 

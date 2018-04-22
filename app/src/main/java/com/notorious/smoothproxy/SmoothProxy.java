@@ -81,7 +81,7 @@ final class SmoothProxy extends NanoHTTPD {
             List<String> ch = session.getParameters().get("ch");
 
             if (ch != null) {
-                url = "https://" + server + ".smoothstreams.tv/" + service + "/ch" + ch.get(0) + "q" + (Integer.parseInt(ch.get(0)) < 61 ? quality : 1) + ".stream";
+                url = "https://" + server + ".smoothstreams.tv/" + service + "/ch" + ch.get(0) + "q" + (Integer.valueOf(ch.get(0)) < 61 ? quality : 1) + ".stream";
                 res = getResponse(url + path + "?wmsAuthSign=" + getAuth());
                 txt = "Channel " + ch.get(0);
 
@@ -131,30 +131,39 @@ final class SmoothProxy extends NanoHTTPD {
 
     private Response getPlaylist() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
+        List<Channel> channels = new ArrayList<>();
 
         JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/altepg/channels.json");
-        if (map != null) for (String key : map.keySet()) {
-            JsonObject jO = map.getAsJsonObject(key);
-
-            int group = jO.getAsJsonPrimitive("247").getAsInt();
-            int num = jO.getAsJsonPrimitive("channum").getAsInt();
-            String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
-            String name = HttpClient.decode(jO.getAsJsonPrimitive("channame").getAsString());
-
-            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
-                    group == 1 ? "24/7 channels" : "Empty channels", id, num, name, host, port, num));
-        }
-        else {
-            map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
-            if (map != null) for (String key : map.keySet()) {
+        if (map != null) {
+            for (String key : map.keySet()) {
                 JsonObject jO = map.getAsJsonObject(key);
 
-                int num = jO.getAsJsonPrimitive("channel_id").getAsInt();
-                String name = HttpClient.decode(jO.getAsJsonPrimitive("name").getAsString().substring(5).trim());
+                String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
+                int num = jO.getAsJsonPrimitive("channum").getAsInt();
+                String name = HttpClient.decode(jO.getAsJsonPrimitive("channame").getAsString());
+                boolean group = jO.getAsJsonPrimitive("247").getAsInt() == 1;
 
-                out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
-                        num < 61 ? "24/7 channels" : "Empty channels", num, num, !name.isEmpty() ? name : "Channel " + num, host, port, num));
+                channels.add(new Channel(id, num, name, group));
             }
+        } else {
+            map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
+            if (map != null) {
+                for (String key : map.keySet()) {
+                    JsonObject jO = map.getAsJsonObject(key);
+
+                    int num = jO.getAsJsonPrimitive("channel_id").getAsInt();
+                    String name = HttpClient.decode(jO.getAsJsonPrimitive("name").getAsString().substring(5).trim());
+
+                    channels.add(new Channel(String.valueOf(num), num, name, num < 61));
+                }
+            }
+        }
+
+        Collections.sort(channels);
+
+        for (Channel c : channels) {
+            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
+                    c.group ? "24/7 channels" : "Empty channels", c.id, c.num, c.name, host, port, c.num));
         }
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
@@ -166,36 +175,57 @@ final class SmoothProxy extends NanoHTTPD {
         Date now = new Date();
 
         JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
-        if (map != null) for (String key : map.keySet()) {
-            JsonObject jO = map.getAsJsonObject(key);
+        if (map != null) {
+            for (String key : map.keySet()) {
+                JsonObject jO = map.getAsJsonObject(key);
 
-            JsonArray jA = jO.getAsJsonArray("items");
-            if (jA != null) for (JsonElement jE : jA) {
-                jO = jE.getAsJsonObject();
+                JsonArray jA = jO.getAsJsonArray("items");
+                if (jA != null) for (JsonElement jE : jA) {
+                    jO = jE.getAsJsonObject();
 
-                Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
-                if (Event.isDate(now, time)) {
-                    int num = jO.getAsJsonPrimitive("channel").getAsInt();
-                    String group = jO.getAsJsonPrimitive("category").getAsString();
-                    String quality = jO.getAsJsonPrimitive("quality").getAsString();
-                    String language = jO.getAsJsonPrimitive("language").getAsString();
-                    String name = HttpClient.decode(jO.getAsJsonPrimitive("name").getAsString());
+                    Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
+                    if (Event.isDate(now, time)) {
+                        int num = jO.getAsJsonPrimitive("channel").getAsInt();
+                        String name = HttpClient.decode(jO.getAsJsonPrimitive("name").getAsString());
+                        String group = jO.getAsJsonPrimitive("category").getAsString();
+                        String quality = jO.getAsJsonPrimitive("quality").getAsString();
+                        String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                    events.add(new Event(num, name, time, !group.isEmpty() ? group : "~UNKNOWN~", quality, language));
+                        events.add(new Event(time, num, name, !group.isEmpty() ? group : "~UNKNOWN~", quality, language));
+                    }
                 }
+            }
+
+            int nonce = 0;
+            Collections.sort(events);
+            String pattern = ipc.getPattern();
+
+            for (Event e : events) {
+                out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&nonce=%02d\n",
+                        e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num, ++nonce));
             }
         }
 
-        int nonce = 0;
-        Collections.sort(events);
-        String pattern = ipc.getPattern();
+        return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
+    }
 
-        for (Event e : events) {
-            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&nonce=%02d\n",
-                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num, ++nonce));
+    static final class Channel implements Comparable<Channel> {
+        final String id;
+        final int num;
+        final String name;
+        final boolean group;
+
+        Channel(String id, int num, String name, boolean group) {
+            this.id = id;
+            this.num = num;
+            this.name = name;
+            this.group = group;
         }
 
-        return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
+        @Override
+        public int compareTo(Channel c) {
+            return num - c.num;
+        }
     }
 
     static final class Event implements Comparable<Event> {
@@ -203,17 +233,17 @@ final class SmoothProxy extends NanoHTTPD {
         private static final SimpleDateFormat OUT_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         private static final TimeZone NY_TZ = TimeZone.getTimeZone("America/New_York");
 
+        final Date time;
         final int num;
         final String name;
-        final Date time;
         final String group;
         final String quality;
         final String language;
 
-        Event(int num, String name, Date time, String group, String quality, String language) {
+        Event(Date time, int num, String name, String group, String quality, String language) {
+            this.time = time;
             this.num = num;
             this.name = name;
-            this.time = time;
             this.group = group;
             this.quality = quality;
             this.language = language;
