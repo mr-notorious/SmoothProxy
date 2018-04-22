@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2017 mr-notorious
+    Copyright (c) 2018 mr-notorious
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -95,7 +95,7 @@ final class SmoothProxy extends NanoHTTPD {
             txt = "Playlist";
 
         } else if (path.equals("/epg.xml.gz")) {
-            res = getResponse("https://guide.smoothstreams.tv/altepg/xmltv1.xml.gz");
+            res = getResponse("https://guide.smoothstreams.tv/altepg/xmltv2.xml.gz");
             txt = "EPG";
 
         } else if (path.equals("/sports.xml")) {
@@ -141,9 +141,9 @@ final class SmoothProxy extends NanoHTTPD {
                 String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
                 int num = jO.getAsJsonPrimitive("channum").getAsInt();
                 String name = HttpClient.decode(jO.getAsJsonPrimitive("channame").getAsString());
-                boolean group = jO.getAsJsonPrimitive("247").getAsInt() == 1;
+                int group = jO.getAsJsonPrimitive("247").getAsInt();
 
-                channels.add(new Channel(id, num, name, group));
+                channels.add(new Channel(id, num, name, group == 1));
             }
         } else {
             map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
@@ -195,15 +195,15 @@ final class SmoothProxy extends NanoHTTPD {
                     }
                 }
             }
+        }
 
-            int nonce = 0;
-            Collections.sort(events);
-            String pattern = ipc.getPattern();
+        int nonce = 0;
+        Collections.sort(events);
+        String pattern = ipc.getPattern();
 
-            for (Event e : events) {
-                out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&nonce=%02d\n",
-                        e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num, ++nonce));
-            }
+        for (Event e : events) {
+            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&nonce=%02d\n",
+                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num, ++nonce));
         }
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());

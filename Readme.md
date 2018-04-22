@@ -30,7 +30,7 @@ At this time, SmoothProxy is barebones. It is guaranteed to break on the stupide
 ```
 MIT License
 
-Copyright (c) 2017 mr-notorious
+Copyright (c) 2018 mr-notorious
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
