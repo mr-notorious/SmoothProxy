@@ -21,7 +21,7 @@ At this time, SmoothProxy is barebones. It is guaranteed to break on the stupide
 ---
 
 ## Dependencies
-* [google-gson v2.8.2](https://github.com/google/gson) - JSON parser.
+* [google-gson v2.8.3](https://github.com/google/gson) - JSON parser.
 * [jsoup v1.11.3](https://github.com/jhy/jsoup) - HTML parser.
 * [OkHttp v3.10.0](https://github.com/square/okhttp) - HTTP client.
 * [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - HTTP server.

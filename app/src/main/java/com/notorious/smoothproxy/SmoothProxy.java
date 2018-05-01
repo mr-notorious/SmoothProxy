@@ -124,6 +124,8 @@ final class SmoothProxy extends NanoHTTPD {
             if (jO != null && jO.getAsJsonPrimitive("code").getAsInt() == 1) {
                 auth = jO.getAsJsonPrimitive("hash").getAsString();
                 time = now + 7200000;
+            } else {
+                ipc.setNotification("Authentication error: " + (jO == null ? "Unreachable" : "Unauthorized"));
             }
         }
         return auth;
@@ -191,7 +193,7 @@ final class SmoothProxy extends NanoHTTPD {
                         String quality = jO.getAsJsonPrimitive("quality").getAsString();
                         String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                        events.add(new Event(time, num, name, !group.isEmpty() ? group : "~UNKNOWN~", quality, language));
+                        events.add(new Event(time, num, name, !group.isEmpty() ? group : "~Other", quality, language));
                     }
                 }
             }
