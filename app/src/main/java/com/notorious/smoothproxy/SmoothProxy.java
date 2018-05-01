@@ -83,7 +83,6 @@ final class SmoothProxy extends NanoHTTPD {
             if (ch != null) {
                 url = "https://" + server + ".smoothstreams.tv/" + service + "/ch" + ch.get(0) + "q" + (Integer.valueOf(ch.get(0)) < 61 ? quality : 1) + ".stream";
                 res = getResponse(url + path + "?wmsAuthSign=" + getAuth());
-                txt = "Channel " + ch.get(0);
 
             } else {
                 res = getPlaylist();
