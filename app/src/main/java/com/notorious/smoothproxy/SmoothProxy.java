@@ -192,7 +192,7 @@ final class SmoothProxy extends NanoHTTPD {
                         String quality = jO.getAsJsonPrimitive("quality").getAsString();
                         String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                        events.add(new Event(time, num, name, !group.isEmpty() ? group : "~Other", quality, language));
+                        events.add(new Event(time, num, name, !group.isEmpty() ? group : "_Unknown", quality, language));
                     }
                 }
             }
