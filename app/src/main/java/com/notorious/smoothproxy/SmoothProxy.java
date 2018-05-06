@@ -111,7 +111,7 @@ final class SmoothProxy extends NanoHTTPD {
         HttpClient.Content c = HttpClient.getContent(url);
         return c != null
                 ? newFixedLengthResponse(Response.Status.OK, c.type, c.response, c.length)
-                : newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "HTTP/1.1 404 NOT FOUND");
+                : newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404 NOT FOUND");
     }
 
     private String getAuth() {
@@ -120,12 +120,12 @@ final class SmoothProxy extends NanoHTTPD {
             JsonObject jO = HttpClient.getJson((service.contains("mma") ? "https://www.mma-tv.net/loginForm.php" : "https://auth.smoothstreams.tv/hash_api.php")
                     + "?username=" + HttpClient.encode(username) + "&password=" + HttpClient.encode(password) + "&site=" + service);
 
-            if (jO != null && jO.getAsJsonPrimitive("code").getAsInt() == 1) {
-                auth = jO.getAsJsonPrimitive("hash").getAsString();
-                time = now + 7200000;
-            } else {
-                ipc.setNotification("Authentication error: " + (jO == null ? "Unreachable" : "Unauthorized"));
-            }
+            if (jO != null) {
+                if (jO.getAsJsonPrimitive("code").getAsInt() == 1) {
+                    auth = jO.getAsJsonPrimitive("hash").getAsString();
+                    time = now + 7200000;
+                } else ipc.setNotification("Authentication error: Unauthorized");
+            } else ipc.setNotification("Authentication error: Unreachable");
         }
         return auth;
     }
