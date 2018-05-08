@@ -71,7 +71,6 @@ final class SmoothProxy extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         Response res = super.serve(session);
-        String txt = null;
 
         String path = session.getUri();
         if (path.endsWith(".ts") || path.equals("/chunks.m3u8")) {
@@ -85,24 +84,23 @@ final class SmoothProxy extends NanoHTTPD {
                 res = getResponse(url + path + "?wmsAuthSign=" + getAuth());
 
             } else {
+                ipc.setNotification("Now serving: Playlist");
                 res = getPlaylist();
-                txt = "Playlist";
             }
 
         } else if (path.equals("/sports.m3u8")) {
+            ipc.setNotification("Now serving: Playlist");
             res = getSports();
-            txt = "Playlist";
 
         } else if (path.equals("/epg.xml.gz")) {
+            ipc.setNotification("Now serving: EPG");
             res = getResponse("https://guide.smoothstreams.tv/altepg/xmltv2.xml.gz");
-            txt = "EPG";
 
         } else if (path.equals("/sports.xml")) {
+            ipc.setNotification("Now serving: EPG");
             res = getResponse("https://guide.smoothstreams.tv/feed.xml");
-            txt = "EPG";
         }
 
-        if (txt != null) ipc.setNotification("Now serving: " + txt);
         res.addHeader("Access-Control-Allow-Origin", "*");
         return res;
     }
@@ -124,9 +122,12 @@ final class SmoothProxy extends NanoHTTPD {
                 if (jO.getAsJsonPrimitive("code").getAsInt() == 1) {
                     auth = jO.getAsJsonPrimitive("hash").getAsString();
                     time = now + 7200000;
+
                 } else ipc.setNotification("Authentication error: Unauthorized");
+
             } else ipc.setNotification("Authentication error: Unreachable");
         }
+
         return auth;
     }
 
@@ -141,10 +142,10 @@ final class SmoothProxy extends NanoHTTPD {
 
                 String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
                 int num = jO.getAsJsonPrimitive("channum").getAsInt();
-                String name = HttpClient.decode(jO.getAsJsonPrimitive("channame").getAsString());
+                String name = jO.getAsJsonPrimitive("channame").getAsString();
                 int group = jO.getAsJsonPrimitive("247").getAsInt();
 
-                channels.add(new Channel(id, num, name, group == 1));
+                channels.add(new Channel(id, num, HttpClient.decode(name), group == 1));
             }
         } else {
             map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
@@ -153,9 +154,9 @@ final class SmoothProxy extends NanoHTTPD {
                     JsonObject jO = map.getAsJsonObject(key);
 
                     int num = jO.getAsJsonPrimitive("channel_id").getAsInt();
-                    String name = HttpClient.decode(jO.getAsJsonPrimitive("name").getAsString().substring(5).trim());
+                    String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
 
-                    channels.add(new Channel(String.valueOf(num), num, name, num < 61));
+                    channels.add(new Channel(String.valueOf(num), num, HttpClient.decode(name), num < 61));
                 }
             }
         }
@@ -187,24 +188,24 @@ final class SmoothProxy extends NanoHTTPD {
                     Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
                     if (Event.isDate(now, time)) {
                         int num = jO.getAsJsonPrimitive("channel").getAsInt();
-                        String name = HttpClient.decode(jO.getAsJsonPrimitive("name").getAsString());
+                        String name = jO.getAsJsonPrimitive("name").getAsString();
                         String group = jO.getAsJsonPrimitive("category").getAsString();
                         String quality = jO.getAsJsonPrimitive("quality").getAsString();
                         String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                        events.add(new Event(time, num, name, !group.isEmpty() ? group : "_Unknown", quality, language));
+                        events.add(new Event(time, num, HttpClient.decode(name), !group.isEmpty() ? group : "_Unknown", quality, language));
                     }
                 }
             }
         }
 
-        int nonce = 0;
+        int n = 0;
         Collections.sort(events);
         String pattern = ipc.getPattern();
 
         for (Event e : events) {
-            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&nonce=%02d\n",
-                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num, ++nonce));
+            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&n=%02d\n",
+                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num, ++n));
         }
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
