@@ -118,7 +118,7 @@ final class SmoothProxy extends NanoHTTPD {
             JsonObject jO = HttpClient.getJson((service.contains("mma") ? "https://www.mma-tv.net/loginForm.php" : "https://auth.smoothstreams.tv/hash_api.php")
                     + "?username=" + HttpClient.encode(username) + "&password=" + HttpClient.encode(password) + "&site=" + service);
 
-            if (jO != null) {
+            if (jO != null && jO.has("code")) {
                 if (jO.getAsJsonPrimitive("code").getAsInt() == 1) {
                     auth = jO.getAsJsonPrimitive("hash").getAsString();
                     time = now + 7200000;
@@ -274,11 +274,11 @@ final class SmoothProxy extends NanoHTTPD {
 
         @Override
         public int compareTo(Event e) {
-            int c = group.compareTo(e.group);
-            if (c == 0) c = time.compareTo(e.time);
-            if (c == 0) c = name.compareTo(e.name);
-            if (c == 0) c = num - e.num;
-            return c;
+            int n = group.compareTo(e.group);
+            if (n == 0) n = time.compareTo(e.time);
+            if (n == 0) n = name.compareTo(e.name);
+            if (n == 0) n = num - e.num;
+            return n;
         }
     }
 }
