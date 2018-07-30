@@ -127,7 +127,6 @@ final class SmoothProxy extends NanoHTTPD {
 
             } else ipc.setNotification("Authentication error: Unreachable");
         }
-
         return auth;
     }
 
@@ -182,18 +181,20 @@ final class SmoothProxy extends NanoHTTPD {
                 JsonObject jO = map.getAsJsonObject(key);
 
                 JsonArray jA = jO.getAsJsonArray("items");
-                if (jA != null) for (JsonElement jE : jA) {
-                    jO = jE.getAsJsonObject();
+                if (jA != null) {
+                    for (JsonElement jE : jA) {
+                        jO = jE.getAsJsonObject();
 
-                    Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
-                    if (Event.isDate(now, time)) {
-                        int num = jO.getAsJsonPrimitive("channel").getAsInt();
-                        String name = jO.getAsJsonPrimitive("name").getAsString();
-                        String group = jO.getAsJsonPrimitive("category").getAsString();
-                        String quality = jO.getAsJsonPrimitive("quality").getAsString();
-                        String language = jO.getAsJsonPrimitive("language").getAsString();
+                        Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
+                        if (Event.isDate(now, time)) {
+                            int num = jO.getAsJsonPrimitive("channel").getAsInt();
+                            String name = jO.getAsJsonPrimitive("name").getAsString();
+                            String group = jO.getAsJsonPrimitive("category").getAsString();
+                            String quality = jO.getAsJsonPrimitive("quality").getAsString();
+                            String language = jO.getAsJsonPrimitive("language").getAsString();
 
-                        events.add(new Event(time, num, HttpClient.decode(name), !group.isEmpty() ? group : "_Unknown", quality, language));
+                            events.add(new Event(time, num, HttpClient.decode(name), !group.isEmpty() ? group : "_Unknown", quality, language));
+                        }
                     }
                 }
             }

@@ -6,7 +6,7 @@ android {
     defaultConfig {
         applicationId "com.notorious.smoothproxy"
         minSdkVersion 14
-        targetSdkVersion 20
+        targetSdkVersion 25
         versionCode 1
         versionName "1.5.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -28,7 +28,7 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
     compile 'com.google.code.gson:gson:2.8.5'
-    compile 'com.squareup.okhttp3:okhttp:3.10.0'
+    compile 'com.squareup.okhttp3:okhttp:3.11.0'
     compile 'org.jsoup:jsoup:1.11.3'
     compile 'org.nanohttpd:nanohttpd:2.3.1'
 }
