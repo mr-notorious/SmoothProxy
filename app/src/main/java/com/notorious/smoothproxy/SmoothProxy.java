@@ -80,7 +80,7 @@ final class SmoothProxy extends NanoHTTPD {
             List<String> ch = session.getParameters().get("ch");
 
             if (ch != null) {
-                url = "https://" + server + ".smoothstreams.tv/" + service + "/ch" + ch.get(0) + "q" + (Integer.valueOf(ch.get(0)) < 61 ? quality : 1) + ".stream";
+                url = "https://" + server + ".smoothstreams.tv/" + service + "/ch" + ch.get(0) + "q" + (Integer.valueOf(ch.get(0)) < 70 ? quality : 1) + ".stream";
                 res = getResponse(url + path + "?wmsAuthSign=" + getAuth());
 
             } else {
@@ -155,7 +155,7 @@ final class SmoothProxy extends NanoHTTPD {
                     int num = jO.getAsJsonPrimitive("channel_id").getAsInt();
                     String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
 
-                    channels.add(new Channel(String.valueOf(num), num, HttpClient.decode(name), num < 61));
+                    channels.add(new Channel(String.valueOf(num), num, HttpClient.decode(name), num < 70));
                 }
             }
         }

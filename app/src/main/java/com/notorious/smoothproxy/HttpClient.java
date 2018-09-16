@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
@@ -60,7 +61,8 @@ final class HttpClient {
     static Content getContent(String url) {
         try {
             ResponseBody rB = getResponseBody(url);
-            return new Content(rB.byteStream(), rB.contentLength(), rB.contentType().toString());
+            MediaType mT = rB.contentType();
+            return new Content(rB.byteStream(), rB.contentLength(), mT != null ? mT.toString() : "text/plain");
         } catch (Exception e) {
             e.printStackTrace();
             return null;
