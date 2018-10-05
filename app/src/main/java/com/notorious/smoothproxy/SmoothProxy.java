@@ -24,6 +24,8 @@
 
 package com.notorious.smoothproxy;
 
+import android.support.annotation.NonNull;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -92,6 +94,10 @@ final class SmoothProxy extends NanoHTTPD {
             ipc.setNotification("Now serving: Playlist");
             res = getSports();
 
+        } else if (path.equals("/epg.xml")) {
+            ipc.setNotification("Now serving: EPG");
+            res = getResponse("https://guide.smoothstreams.tv/altepg/xmltv2.xml");
+
         } else if (path.equals("/epg.xml.gz")) {
             ipc.setNotification("Now serving: EPG");
             res = getResponse("https://guide.smoothstreams.tv/altepg/xmltv2.xml.gz");
@@ -142,7 +148,7 @@ final class SmoothProxy extends NanoHTTPD {
                 String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
                 int num = jO.getAsJsonPrimitive("channum").getAsInt();
                 String name = jO.getAsJsonPrimitive("channame").getAsString();
-                int group = jO.getAsJsonPrimitive("247").getAsInt();
+                int group = jO.getAsJsonPrimitive("live").getAsInt();
 
                 channels.add(new Channel(id, num, HttpClient.decode(name), group == 1));
             }
@@ -226,7 +232,7 @@ final class SmoothProxy extends NanoHTTPD {
         }
 
         @Override
-        public int compareTo(Channel c) {
+        public int compareTo(@NonNull Channel c) {
             return num - c.num;
         }
     }
@@ -274,7 +280,7 @@ final class SmoothProxy extends NanoHTTPD {
         }
 
         @Override
-        public int compareTo(Event e) {
+        public int compareTo(@NonNull Event e) {
             int n = group.compareTo(e.group);
             if (n == 0) n = time.compareTo(e.time);
             if (n == 0) n = name.compareTo(e.name);
