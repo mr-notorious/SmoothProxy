@@ -64,7 +64,7 @@ public class MainService extends Service implements Ipc {
 
     @Override
     public String getPattern() {
-        return DateFormat.is24HourFormat(this) ? "HH:mm" : "h:mm a";
+        return DateFormat.is24HourFormat(this) ? "HH:mm" : "hh:mm a";
     }
 
     @Override
