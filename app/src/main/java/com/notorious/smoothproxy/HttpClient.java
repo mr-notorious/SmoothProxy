@@ -39,6 +39,7 @@ import okhttp3.Request;
 import okhttp3.ResponseBody;
 
 final class HttpClient {
+    private static final Gson PARSER = new Gson();
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -72,7 +73,7 @@ final class HttpClient {
     static JsonObject getJson(String url) {
         try {
             ResponseBody rB = getResponseBody(url);
-            return new Gson().fromJson(rB.charStream(), JsonObject.class);
+            return PARSER.fromJson(rB.charStream(), JsonObject.class);
         } catch (Exception e) {
             e.printStackTrace();
             return null;

@@ -139,46 +139,55 @@ final class SmoothProxy extends NanoHTTPD {
     private Response getPlaylist() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
         List<Channel> channels = new ArrayList<>();
+        boolean fog;
 
         JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/altepg/channels.json");
-        if (map != null) {
+        if (fog = (map != null)) {
             for (String key : map.keySet()) {
                 JsonObject jO = map.getAsJsonObject(key);
 
-                String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
-                int num = jO.getAsJsonPrimitive("channum").getAsInt();
-                String name = jO.getAsJsonPrimitive("channame").getAsString();
-                int group = jO.getAsJsonPrimitive("live").getAsInt();
+                try {
+                    String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
+                    int num = jO.getAsJsonPrimitive("channum").getAsInt();
+                    String name = jO.getAsJsonPrimitive("channame").getAsString();
+                    channels.add(new Channel(id, num, HttpClient.decode(name)));
 
-                channels.add(new Channel(id, num, HttpClient.decode(name), group == 1));
+                } catch (Exception e) {
+                    channels.clear();
+                    fog = false;
+                    break;
+                }
             }
-        } else {
+        }
+
+        if (!fog) {
             map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
             if (map != null) {
                 for (String key : map.keySet()) {
                     JsonObject jO = map.getAsJsonObject(key);
 
-                    int num = jO.getAsJsonPrimitive("channel_id").getAsInt();
+                    String id = jO.getAsJsonPrimitive("channel_id").getAsString();
                     String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
-
-                    channels.add(new Channel(String.valueOf(num), num, HttpClient.decode(name), num < 70));
+                    channels.add(new Channel(id, Integer.valueOf(id), HttpClient.decode(name)));
                 }
             }
         }
 
+        if (channels.isEmpty())
+            return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404 NOT FOUND");
+
         Collections.sort(channels);
 
-        for (Channel c : channels) {
+        for (Channel c : channels)
             out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
-                    c.group ? "24/7 channels" : "Empty channels", c.id, c.num, c.name, host, port, c.num));
-        }
+                    "SSTV channels", c.id, c.num, c.name, host, port, c.num));
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
     }
 
     private Response getSports() {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
-        List<Event> events = new ArrayList<>();
+        List<Sport> sports = new ArrayList<>();
         Date now = new Date();
 
         JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
@@ -191,29 +200,30 @@ final class SmoothProxy extends NanoHTTPD {
                     for (JsonElement jE : jA) {
                         jO = jE.getAsJsonObject();
 
-                        Date time = Event.getDate(jO.getAsJsonPrimitive("time").getAsString());
-                        if (Event.isDate(now, time)) {
+                        Date time = Sport.getDate(jO.getAsJsonPrimitive("time").getAsString());
+                        if (Sport.isDate(now, time)) {
                             int num = jO.getAsJsonPrimitive("channel").getAsInt();
                             String name = jO.getAsJsonPrimitive("name").getAsString();
                             String group = jO.getAsJsonPrimitive("category").getAsString();
                             String quality = jO.getAsJsonPrimitive("quality").getAsString();
                             String language = jO.getAsJsonPrimitive("language").getAsString();
-
-                            events.add(new Event(time, num, HttpClient.decode(name), !group.isEmpty() ? group : "_Unknown", quality, language));
+                            sports.add(new Sport(time, num, HttpClient.decode(name), !group.isEmpty() ? group : "_Unknown", quality, language));
                         }
                     }
                 }
             }
         }
 
-        int n = 0;
-        Collections.sort(events);
-        String pattern = ipc.getPattern();
+        if (sports.isEmpty())
+            return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404 NOT FOUND");
 
-        for (Event e : events) {
-            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/events/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&n=%02d\n",
-                    e.group, e.num, e.num, e.getEvent(pattern), host, port, e.num, ++n));
-        }
+        int n = 0;
+        Collections.sort(sports);
+        Sport.setPattern(ipc.getPattern());
+
+        for (Sport s : sports)
+            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&n=%02d\n",
+                    s.group, s.num, s.num, s, host, port, s.num, ++n));
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
     }
@@ -222,13 +232,11 @@ final class SmoothProxy extends NanoHTTPD {
         final String id;
         final int num;
         final String name;
-        final boolean group;
 
-        Channel(String id, int num, String name, boolean group) {
+        Channel(String id, int num, String name) {
             this.id = id;
             this.num = num;
             this.name = name;
-            this.group = group;
         }
 
         @Override
@@ -237,10 +245,11 @@ final class SmoothProxy extends NanoHTTPD {
         }
     }
 
-    static final class Event implements Comparable<Event> {
+    static final class Sport implements Comparable<Sport> {
         private static final SimpleDateFormat IN_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         private static final SimpleDateFormat OUT_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         private static final TimeZone NY_TZ = TimeZone.getTimeZone("America/New_York");
+        private static SimpleDateFormat SDF = new SimpleDateFormat("HH:mm", Locale.US);
 
         final Date time;
         final int num;
@@ -249,13 +258,17 @@ final class SmoothProxy extends NanoHTTPD {
         final String quality;
         final String language;
 
-        Event(Date time, int num, String name, String group, String quality, String language) {
+        Sport(Date time, int num, String name, String group, String quality, String language) {
             this.time = time;
             this.num = num;
             this.name = name;
             this.group = group;
             this.quality = quality;
             this.language = language;
+        }
+
+        static void setPattern(String pattern) {
+            SDF = new SimpleDateFormat(pattern, Locale.US);
         }
 
         static Date getDate(String text) {
@@ -272,20 +285,20 @@ final class SmoothProxy extends NanoHTTPD {
             return OUT_SDF.format(d_1).equals(OUT_SDF.format(d_2));
         }
 
-        String getEvent(String pattern) {
-            boolean q = !quality.isEmpty();
-            boolean l = !language.isEmpty();
-            return new SimpleDateFormat(pattern, Locale.US).format(time) + " | " + name.replace(",", "") + " "
-                    + (q || l ? "(" + (q ? quality : "") + (q && l ? "/" : "") + (l ? language : "") + ")" : "").toUpperCase();
+        @Override
+        public int compareTo(@NonNull Sport s) {
+            int n = group.compareTo(s.group);
+            if (n == 0) n = time.compareTo(s.time);
+            if (n == 0) n = name.compareTo(s.name);
+            if (n == 0) n = num - s.num;
+            return n;
         }
 
         @Override
-        public int compareTo(@NonNull Event e) {
-            int n = group.compareTo(e.group);
-            if (n == 0) n = time.compareTo(e.time);
-            if (n == 0) n = name.compareTo(e.name);
-            if (n == 0) n = num - e.num;
-            return n;
+        public String toString() {
+            boolean q = !quality.isEmpty();
+            boolean l = !language.isEmpty();
+            return SDF.format(time) + " | " + name.replace(",", "") + " " + (q || l ? "(" + (q ? quality : "") + (q && l ? "/" : "") + (l ? language : "") + ")" : "").toUpperCase();
         }
     }
 }
