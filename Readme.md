@@ -1,6 +1,6 @@
 # SmoothProxy
 
-![SmoothProxy Icon](http://i.imgur.com/cWxIruq.png "Icon courtesy of Obs")
+![SmoothProxy Icon](http://i.imgur.com/cWxIruq.png)
 
 ---
 
@@ -8,7 +8,7 @@
 1. Install and launch SmoothProxy on your Android device.
 2. Fill out **[Username]**, **[Password]**, **[Service]**, and **[Server]** fields.
 3. **[Save]** and/or back out of SmoothProxy. Note, **[Stop]** will terminate SmoothProxy.
-![SmoothProxy Screenshot](https://i.imgur.com/ecLwGxw.png)
+![SmoothProxy Screenshot](https://i.imgur.com/nv7yojJ.png)
 4. To connect SmoothProxy with an IPTV player of your choosing, use the following URLs in verbatim:
     * Playlist URL: **http://localhost:8888/playlist.m3u8**
     * EPG URL: **http://localhost:8888/epg.xml**
