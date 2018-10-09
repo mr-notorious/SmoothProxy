@@ -41,6 +41,7 @@ import java.util.TimeZone;
 import fi.iki.elonen.NanoHTTPD;
 
 final class SmoothProxy extends NanoHTTPD {
+    private static final Response NOT_FOUND = newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404 NOT FOUND");
     private final String host;
     private final int port;
     private final Ipc ipc;
@@ -61,10 +62,10 @@ final class SmoothProxy extends NanoHTTPD {
     }
 
     void init(String username, String password, String service, String server, int quality) {
-        this.username = HttpClient.encode(username);
-        this.password = HttpClient.encode(password);
-        this.service = HttpClient.encode(service);
-        this.server = HttpClient.encode(server);
+        this.username = username;
+        this.password = password;
+        this.service = service;
+        this.server = server;
         this.quality = quality;
         auth = null;
         time = 0;
@@ -113,16 +114,14 @@ final class SmoothProxy extends NanoHTTPD {
 
     private Response getResponse(String url) {
         HttpClient.Content c = HttpClient.getContent(url);
-        return c != null
-                ? newFixedLengthResponse(Response.Status.OK, c.type, c.response, c.length)
-                : newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404");
+        return c != null ? newFixedLengthResponse(Response.Status.OK, c.type, c.response, c.length) : NOT_FOUND;
     }
 
     private String getAuth() {
         long now = System.currentTimeMillis();
         if (auth == null || time < now) {
             JsonObject jO = HttpClient.getJson((service.contains("mma") ? "https://www.mma-tv.net/loginForm.php" : "https://auth.smoothstreams.tv/hash_api.php")
-                    + "?username=" + username + "&password=" + password + "&site=" + service);
+                    + "?username=" + HttpClient.encode(username) + "&password=" + HttpClient.encode(password) + "&site=" + service);
 
             if (jO != null && jO.has("code")) {
                 if (jO.getAsJsonPrimitive("code").getAsInt() == 1) {
@@ -159,15 +158,15 @@ final class SmoothProxy extends NanoHTTPD {
                     String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
                     channels.add(new Channel(id, Integer.valueOf(id), HttpClient.decode(name)));
                 }
-            } else return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404");
+            } else return NOT_FOUND;
         }
 
         Collections.sort(channels);
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
         for (Channel c : channels)
-            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
-                    "SSTV channels", c.id, c.num, c.name, host, port, c.num));
+            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"SSTV channels\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
+                    c.id, c.num, c.name, host, port, c.num));
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
     }
@@ -198,7 +197,7 @@ final class SmoothProxy extends NanoHTTPD {
                     }
                 }
             }
-        } else return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404");
+        } else return NOT_FOUND;
 
         int n = 0;
         Collections.sort(sports);
@@ -251,10 +250,6 @@ final class SmoothProxy extends NanoHTTPD {
             this.language = language;
         }
 
-        static void setPattern(String pattern) {
-            SDF = new SimpleDateFormat(pattern, Locale.US);
-        }
-
         static Date getAsDate(String text) {
             try {
                 IN_SDF.setTimeZone(NY_TZ);
@@ -267,6 +262,10 @@ final class SmoothProxy extends NanoHTTPD {
 
         static boolean isSameDate(Date d_1, Date d_2) {
             return OUT_SDF.format(d_1).equals(OUT_SDF.format(d_2));
+        }
+
+        static void setPattern(String pattern) {
+            SDF = new SimpleDateFormat(pattern, Locale.US);
         }
 
         @Override
