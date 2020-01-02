@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2018 mr-notorious
+    Copyright (c) 2020 mr-notorious
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -35,17 +35,16 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.text.format.DateFormat;
 
-public class MainService extends Service implements Ipc {
-    private final SmoothProxy proxy = new SmoothProxy("127.0.0.1", 8888, this);
+public final class MainService extends Service implements Bind {
+    private final HttpServer server = new HttpServer("127.0.0.1", 8888, this);
     private final IBinder binder = new LocalBinder();
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
-            proxy.start();
-            startForeground(1, getNotification("Ready to serve."));
+            server.start();
+            startForeground(1, getNotification("Running"));
         } catch (Exception e) {
-            e.printStackTrace();
             stopSelf();
         }
         return START_STICKY;
@@ -58,13 +57,13 @@ public class MainService extends Service implements Ipc {
 
     @Override
     public void onDestroy() {
-        proxy.stop();
+        server.stop();
         stopForeground(true);
     }
 
     @Override
-    public String getPattern() {
-        return DateFormat.is24HourFormat(this) ? "HH:mm" : "hh:mm a";
+    public boolean is24HourFormat() {
+        return DateFormat.is24HourFormat(this);
     }
 
     @Override
@@ -74,8 +73,8 @@ public class MainService extends Service implements Ipc {
 
     private Notification getNotification(String text) {
         return new NotificationCompat.Builder(this)
+                .setContentTitle(getResources().getString(R.string.app_name))
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("SmoothProxy")
                 .setContentText(text)
                 .setOngoing(true)
                 .setPriority(2)
@@ -83,12 +82,12 @@ public class MainService extends Service implements Ipc {
     }
 
     void loadPreferences(SharedPreferences preferences) {
-        proxy.init(
-                preferences.getString("username", null),
-                preferences.getString("password", null),
-                preferences.getString("service", null),
-                preferences.getString("server", null),
-                preferences.getInt("quality", R.id.r_hd) - R.id.r_hd + 1
+        server.init(
+                preferences.getString(Bind.USERNAME, null),
+                preferences.getString(Bind.PASSWORD, null),
+                preferences.getString(Bind.SERVICE, null),
+                preferences.getString(Bind.SERVER, null),
+                preferences.getInt(Bind.QUALITY, R.id.r_hd) - R.id.r_hd + 1
         );
     }
 

@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2018 mr-notorious
+    Copyright (c) 2020 mr-notorious
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -29,22 +29,16 @@ import com.google.gson.JsonObject;
 
 import org.jsoup.parser.Parser;
 
-import java.io.InputStream;
 import java.net.URLEncoder;
-import java.util.concurrent.TimeUnit;
+import java.nio.charset.StandardCharsets;
 
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
 
 final class HttpClient {
-    private static final Gson PARSER = new Gson();
-    private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build();
+    private static final OkHttpClient CLIENT = new OkHttpClient();
+    private static final Gson GSON = new Gson();
 
     static String decode(String text) {
         return Parser.unescapeEntities(text, false);
@@ -52,47 +46,29 @@ final class HttpClient {
 
     static String encode(String text) {
         try {
-            return URLEncoder.encode(text, "UTF-8");
+            return URLEncoder.encode(text, StandardCharsets.UTF_8.name());
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
 
-    static Content getContent(String url) {
+    static ResponseBody getResponseBody(String url) {
         try {
-            ResponseBody rB = getResponseBody(url);
-            MediaType mT = rB.contentType();
-            return new Content(rB.byteStream(), rB.contentLength(), mT != null ? mT.toString() : "text/plain");
+            return call(url);
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
 
-    static JsonObject getJson(String url) {
+    static JsonObject getResponseJson(String url) {
         try {
-            ResponseBody rB = getResponseBody(url);
-            return PARSER.fromJson(rB.charStream(), JsonObject.class);
+            return GSON.fromJson(call(url).charStream(), JsonObject.class);
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
 
-    private static ResponseBody getResponseBody(String url) throws Exception {
+    private static ResponseBody call(String url) throws Exception {
         return CLIENT.newCall(new Request.Builder().url(url).build()).execute().body();
-    }
-
-    static final class Content {
-        final InputStream response;
-        final long length;
-        final String type;
-
-        Content(InputStream response, long length, String type) {
-            this.response = response;
-            this.length = length;
-            this.type = type;
-        }
     }
 }

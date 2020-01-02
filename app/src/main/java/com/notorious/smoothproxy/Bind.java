@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2018 mr-notorious
+    Copyright (c) 2020 mr-notorious
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,14 @@
 
 package com.notorious.smoothproxy;
 
-interface Ipc {
-    String getPattern();
+interface Bind {
+    String USERNAME = "username";
+    String PASSWORD = "password";
+    String SERVICE = "service";
+    String SERVER = "server";
+    String QUALITY = "quality";
+
+    boolean is24HourFormat();
 
     void setNotification(String text);
 }

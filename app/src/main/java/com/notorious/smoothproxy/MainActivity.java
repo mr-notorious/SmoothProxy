@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2018 mr-notorious
+    Copyright (c) 2020 mr-notorious
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public final class MainActivity extends AppCompatActivity {
     private SharedPreferences mPreferences;
     private MainService mService;
     private boolean mIsBound;
@@ -99,11 +99,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         bindService(new Intent(this, MainService.class), mConnection, BIND_AUTO_CREATE);
-        etUsername.setText(mPreferences.getString("username", null));
-        etPassword.setText(mPreferences.getString("password", null));
-        etService.setText(mPreferences.getString("service", null));
-        etServer.setText(mPreferences.getString("server", null));
-        rgQuality.check(mPreferences.getInt("quality", R.id.r_hd));
+        etUsername.setText(mPreferences.getString(Bind.USERNAME, null));
+        etPassword.setText(mPreferences.getString(Bind.PASSWORD, null));
+        etService.setText(mPreferences.getString(Bind.SERVICE, null));
+        etServer.setText(mPreferences.getString(Bind.SERVER, null));
+        rgQuality.check(mPreferences.getInt(Bind.QUALITY, R.id.r_hd));
     }
 
     @Override
@@ -129,11 +129,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void savePreferences() {
         SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString("username", etUsername.getText().toString().trim());
-        editor.putString("password", etPassword.getText().toString().trim());
-        editor.putString("service", etService.getText().toString().trim());
-        editor.putString("server", etServer.getText().toString().trim());
-        editor.putInt("quality", rgQuality.getCheckedRadioButtonId());
+        editor.putString(Bind.USERNAME, etUsername.getText().toString().trim());
+        editor.putString(Bind.PASSWORD, etPassword.getText().toString().trim());
+        editor.putString(Bind.SERVICE, etService.getText().toString().trim());
+        editor.putString(Bind.SERVER, etServer.getText().toString().trim());
+        editor.putInt(Bind.QUALITY, rgQuality.getCheckedRadioButtonId());
         editor.commit();
 
         if (mIsBound) mService.loadPreferences(mPreferences);

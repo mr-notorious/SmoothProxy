@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2018 mr-notorious
+    Copyright (c) 2020 mr-notorious
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -30,35 +30,42 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import java.text.SimpleDateFormat;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
+
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import fi.iki.elonen.NanoHTTPD;
+import okhttp3.ResponseBody;
 
-final class SmoothProxy extends NanoHTTPD {
-    private static final Response NOT_FOUND = newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "404 NOT FOUND");
+final class HttpServer extends NanoHTTPD {
+    private static final Response NOT_FOUND = newFixedLengthResponse(Response.Status.NOT_FOUND, NanoHTTPD.MIME_PLAINTEXT, "Not Found");
+
     private final String host;
     private final int port;
-    private final Ipc ipc;
+    private final Bind bind;
     private String username;
     private String password;
     private String service;
     private String server;
     private int quality;
-    private String url;
     private String auth;
     private long time;
 
-    SmoothProxy(String host, int port, Ipc ipc) {
+    HttpServer(String host, int port, Bind bind) {
         super(host, port);
         this.host = host;
         this.port = port;
-        this.ipc = ipc;
+        this.bind = bind;
     }
 
     void init(String username, String password, String service, String server, int quality) {
@@ -74,74 +81,67 @@ final class SmoothProxy extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         Response res = super.serve(session);
+        String uri = session.getUri();
 
-        String path = session.getUri();
-        if (path.endsWith(".ts") || path.equals("/chunks.m3u8")) {
-            res = getResponse(url + path + "?" + session.getQueryParameterString());
+        if (uri.endsWith(".ts") || uri.equals("/chunks.m3u8")) {
+            String num = session.getParameters().get("n").get(0);
+            res = getResponse(getUrl(uri, session.getQueryParameterString(), num));
 
-        } else if (path.equals("/playlist.m3u8")) {
-            List<String> ch = session.getParameters().get("ch");
+        } else if (uri.equals("/playlist.m3u8")) {
+            String num = session.getParameters().get("n").get(0);
+            res = getResponse(getUrl(uri, session.getQueryParameterString() + "&wmsAuthSign=" + getAuth(), num));
 
-            if (ch != null) {
-                url = "https://" + server + ".smoothstreams.tv/" + service + "/ch" + ch.get(0) + "q" + (Integer.valueOf(ch.get(0)) < 70 ? quality : 1) + ".stream";
-                res = getResponse(url + path + "?wmsAuthSign=" + getAuth());
-
-            } else {
-                ipc.setNotification("Now serving: Playlist");
-                res = getPlaylist();
-            }
-
-        } else if (path.equals("/sports.m3u8")) {
-            ipc.setNotification("Now serving: Playlist");
-            res = getSports();
-
-        } else if (path.equals("/epg.xml")) {
-            ipc.setNotification("Now serving: EPG");
+        } else if (uri.equals("/master.xml")) {
             res = getResponse("https://guide.smoothstreams.tv/altepg/xmltv2.xml");
 
-        } else if (path.equals("/epg.xml.gz")) {
-            ipc.setNotification("Now serving: EPG");
-            res = getResponse("https://guide.smoothstreams.tv/altepg/xmltv2.xml.gz");
-
-        } else if (path.equals("/sports.xml")) {
-            ipc.setNotification("Now serving: EPG");
+        } else if (uri.equals("/sports.xml")) {
             res = getResponse("https://guide.smoothstreams.tv/feed.xml");
+
+        } else if (uri.equals("/master.m3u8")) {
+            res = getMaster();
+
+        } else if (uri.equals("/sports.m3u8")) {
+            res = getSports();
         }
 
         res.addHeader("Access-Control-Allow-Origin", "*");
         return res;
     }
 
-    private Response getResponse(String url) {
-        HttpClient.Content c = HttpClient.getContent(url);
-        return c != null ? newFixedLengthResponse(Response.Status.OK, c.type, c.response, c.length) : NOT_FOUND;
+    private String getUrl(String uri, String query, String num) {
+        return "https://" + server + ".smoothstreams.tv/" + service + "/ch" + num + "q" + (NumberUtils.toInt(num) < 70 ? quality : 1) + ".stream" + uri + "?" + query;
     }
 
-    private String getAuth() {
+    private Response getResponse(String url) {
+        ResponseBody rB = HttpClient.getResponseBody(url);
+        return rB != null ? newFixedLengthResponse(Response.Status.OK, Objects.toString(rB.contentType(), NanoHTTPD.MIME_PLAINTEXT), rB.byteStream(), rB.contentLength()) : NOT_FOUND;
+    }
+
+    private synchronized String getAuth() {
         long now = System.currentTimeMillis();
         if (auth == null || time < now) {
-            JsonObject jO = HttpClient.getJson((service.contains("mma") ? "https://www.mma-tv.net/loginForm.php" : "https://auth.smoothstreams.tv/hash_api.php")
+            JsonObject rJ = HttpClient.getResponseJson((service.contains("mma") ? "https://www.mma-tv.net/loginForm.php" : "https://auth.smoothstreams.tv/hash_api.php")
                     + "?username=" + HttpClient.encode(username) + "&password=" + HttpClient.encode(password) + "&site=" + service);
 
-            if (jO != null && jO.has("code")) {
-                if (jO.getAsJsonPrimitive("code").getAsInt() == 1) {
-                    auth = jO.getAsJsonPrimitive("hash").getAsString();
+            if (rJ != null && rJ.has("code")) {
+                if (rJ.getAsJsonPrimitive("code").getAsInt() == 1) {
+                    auth = rJ.getAsJsonPrimitive("hash").getAsString();
                     time = now + 7200000;
 
-                } else ipc.setNotification("Authentication error: Unauthorized");
+                } else bind.setNotification("Unauthorized");
 
-            } else ipc.setNotification("Authentication error: Unreachable");
+            } else bind.setNotification("Unreachable");
         }
         return auth;
     }
 
-    private Response getPlaylist() {
+    private Response getMaster() {
         List<Channel> channels = new ArrayList<>();
 
-        JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/altepg/channels.json");
-        if (map != null) {
-            for (String key : map.keySet()) {
-                JsonObject jO = map.getAsJsonObject(key);
+        JsonObject rJ = HttpClient.getResponseJson("https://guide.smoothstreams.tv/altepg/channels.json");
+        if (rJ != null) {
+            for (String key : rJ.keySet()) {
+                JsonObject jO = rJ.getAsJsonObject(key);
 
                 String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
                 int num = jO.getAsJsonPrimitive("channum").getAsInt();
@@ -149,14 +149,14 @@ final class SmoothProxy extends NanoHTTPD {
                 channels.add(new Channel(id, num, HttpClient.decode(name)));
             }
         } else {
-            map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
-            if (map != null) {
-                for (String key : map.keySet()) {
-                    JsonObject jO = map.getAsJsonObject(key);
+            rJ = HttpClient.getResponseJson("https://guide.smoothstreams.tv/feed.json");
+            if (rJ != null) {
+                for (String key : rJ.keySet()) {
+                    JsonObject jO = rJ.getAsJsonObject(key);
 
                     String id = jO.getAsJsonPrimitive("channel_id").getAsString();
                     String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
-                    channels.add(new Channel(id, Integer.valueOf(id), HttpClient.decode(name)));
+                    channels.add(new Channel(id, NumberUtils.toInt(id), HttpClient.decode(name)));
                 }
             } else return NOT_FOUND;
         }
@@ -165,7 +165,7 @@ final class SmoothProxy extends NanoHTTPD {
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
         for (Channel c : channels)
-            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"SSTV channels\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?ch=%02d\n",
+            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"SSTV channels\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s.\nhttp://%s:%s/playlist.m3u8?n=%02d\n",
                     c.id, c.num, c.name, host, port, c.num));
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
@@ -175,17 +175,17 @@ final class SmoothProxy extends NanoHTTPD {
         List<Sport> sports = new ArrayList<>();
         Date now = new Date();
 
-        JsonObject map = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
-        if (map != null) {
-            for (String key : map.keySet()) {
-                JsonObject jO = map.getAsJsonObject(key);
+        JsonObject rJ = HttpClient.getResponseJson("https://guide.smoothstreams.tv/feed.json");
+        if (rJ != null) {
+            for (String key : rJ.keySet()) {
+                JsonObject jO = rJ.getAsJsonObject(key);
 
                 JsonArray jA = jO.getAsJsonArray("items");
                 if (jA != null) {
                     for (JsonElement jE : jA) {
                         jO = jE.getAsJsonObject();
 
-                        Date time = Sport.getAsDate(jO.getAsJsonPrimitive("time").getAsString());
+                        Date time = Sport.parseTime(jO.getAsJsonPrimitive("time").getAsString());
                         if (Sport.isSameDate(now, time)) {
                             int num = jO.getAsJsonPrimitive("channel").getAsInt();
                             String name = jO.getAsJsonPrimitive("name").getAsString();
@@ -199,14 +199,14 @@ final class SmoothProxy extends NanoHTTPD {
             }
         } else return NOT_FOUND;
 
-        int n = 0;
+        int i = 1;
         Collections.sort(sports);
-        Sport.setPattern(ipc.getPattern());
+        Sport.set24HourFormat(bind.is24HourFormat());
         StringBuilder out = new StringBuilder("#EXTM3U\n");
 
         for (Sport s : sports)
-            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?ch=%02d&n=%02d\n",
-                    s.group, s.num, s.num, s, host, port, s.num, ++n));
+            out.append(String.format(Locale.US, "#EXTINF:-1 group-title=\"%s\" tvg-id=\"%s\" tvg-logo=\"https://guide.smoothstreams.tv/assets/images/channels/%s.png\",%s\nhttp://%s:%s/playlist.m3u8?n=%02d&i=%02d\n",
+                    s.group, s.num, s.num, s, host, port, s.num, ++i));
 
         return newFixedLengthResponse(Response.Status.OK, "application/vnd.apple.mpegurl", out.toString());
     }
@@ -224,15 +224,13 @@ final class SmoothProxy extends NanoHTTPD {
 
         @Override
         public int compareTo(@NonNull Channel c) {
-            return num - c.num;
+            return Integer.compare(num, c.num);
         }
     }
 
     static final class Sport implements Comparable<Sport> {
-        private static final SimpleDateFormat IN_SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-        private static final SimpleDateFormat OUT_SDF = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        private static final TimeZone NY_TZ = TimeZone.getTimeZone("America/New_York");
-        private static SimpleDateFormat SDF = new SimpleDateFormat("HH:mm", Locale.US);
+        private static final FastDateFormat IN_DATE = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss", TimeZone.getTimeZone("America/New_York"), Locale.US);
+        private static FastDateFormat OUT_DATE = FastDateFormat.getInstance();
 
         final Date time;
         final int num;
@@ -250,38 +248,36 @@ final class SmoothProxy extends NanoHTTPD {
             this.language = language;
         }
 
-        static Date getAsDate(String text) {
+        static Date parseTime(String text) {
             try {
-                IN_SDF.setTimeZone(NY_TZ);
-                return IN_SDF.parse(text);
+                return IN_DATE.parse(text);
             } catch (Exception e) {
-                e.printStackTrace();
                 return null;
             }
         }
 
         static boolean isSameDate(Date d_1, Date d_2) {
-            return OUT_SDF.format(d_1).equals(OUT_SDF.format(d_2));
+            return DateUtils.truncatedEquals(d_1, d_2, Calendar.DATE);
         }
 
-        static void setPattern(String pattern) {
-            SDF = new SimpleDateFormat(pattern, Locale.US);
+        static void set24HourFormat(boolean is24HourFormat) {
+            OUT_DATE = FastDateFormat.getInstance(is24HourFormat ? "HH:mm" : "hh:mm a", Locale.US);
         }
 
         @Override
         public int compareTo(@NonNull Sport s) {
-            int n = group.compareTo(s.group);
-            if (n == 0) n = time.compareTo(s.time);
-            if (n == 0) n = name.compareTo(s.name);
-            if (n == 0) n = num - s.num;
-            return n;
+            int i = group.compareTo(s.group);
+            if (i == 0) i = time.compareTo(s.time);
+            if (i == 0) i = name.compareTo(s.name);
+            if (i == 0) i = Integer.compare(num, s.num);
+            return i;
         }
 
         @Override
         public String toString() {
             boolean q = !quality.isEmpty();
             boolean l = !language.isEmpty();
-            return SDF.format(time) + " | " + name.replace(",", "") + " " + (q || l ? "(" + (q ? quality : "") + (q && l ? "/" : "") + (l ? language : "") + ")" : "").toUpperCase();
+            return OUT_DATE.format(time) + " | " + StringUtils.replace(name, ",", "") + " " + (q || l ? "(" + (q ? quality : "") + (q && l ? "/" : "") + (l ? language : "") + ")" : "").toUpperCase();
         }
     }
 }

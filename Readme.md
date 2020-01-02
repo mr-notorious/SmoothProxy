@@ -8,12 +8,10 @@
 1. Install and launch SmoothProxy on your Android device.
 2. Fill out **[Username]**, **[Password]**, **[Service]**, and **[Server]** fields.
 3. **[Save]** and/or back out of SmoothProxy. Note, **[Stop]** will terminate SmoothProxy.
-![SmoothProxy Screenshot](https://i.imgur.com/nv7yojJ.png)
+![SmoothProxy Screenshot](https://i.imgur.com/0jFTcfP.png)
 4. To connect SmoothProxy with an IPTV player of your choosing, use the following URLs in verbatim:
-    * Playlist URL: **http://localhost:8888/playlist.m3u8**
-    * EPG URL: **http://localhost:8888/epg.xml**
-    * NOTE! If **localhost:8888** does not work, try **127.0.0.1:8888**
-5. *Enjoy!*
+    * Playlist URL: **http://127.0.0.1:8888/master.m3u8**
+    * EPG URL: **http://127.0.0.1:8888/master.xml**
 
 ## Warning
 At this time, SmoothProxy is barebones. It is guaranteed to break on the stupidest of reasons. If you want to avoid unnecessary frustrations, refrain yourself from using SmoothProxy. SmoothProxy is not endorsed by SmoothStreams and I am not affiliated with SmoothStreams.
@@ -21,16 +19,17 @@ At this time, SmoothProxy is barebones. It is guaranteed to break on the stupide
 ---
 
 ## Dependencies
+* [apache-commons-lang v3.8.1](https://github.com/apache/commons-lang) - Common utility.
 * [google-gson v2.8.5](https://github.com/google/gson) - JSON parser.
-* [jsoup v1.11.3](https://github.com/jhy/jsoup) - HTML parser.
-* [OkHttp v3.11.0](https://github.com/square/okhttp) - HTTP client.
-* [NanoHTTPD v2.3.1](https://github.com/NanoHttpd/nanohttpd) - HTTP server.
+* [jhy-jsoup v1.12.1](https://github.com/jhy/jsoup) - HTML parser.
+* [square-okhttp v3.12.6](https://github.com/square/okhttp) - HTTP client.
+* [NanoHttpd-nanohttpd v2.3.1](https://github.com/NanoHttpd/nanohttpd) - HTTP server.
 
 ## License
 ```
 MIT License
 
-Copyright (c) 2018 mr-notorious
+Copyright (c) 2020 mr-notorious
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
