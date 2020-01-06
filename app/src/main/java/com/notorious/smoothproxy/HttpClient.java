@@ -35,9 +35,10 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.dnsoverhttps.DnsOverHttps;
 
 final class HttpClient {
-    private static final OkHttpClient CLIENT = new OkHttpClient();
+    private static final OkHttpClient CLIENT = new OkHttpClient.Builder().dns(new DnsOverHttps.Builder().client(new OkHttpClient()).url(HttpUrl.get("https://cloudflare-dns.com/dns-query")).includeIPv6(false).resolvePrivateAddresses(true).build()).build();
     private static final Gson PARSER = new Gson();
 
     static String decode(String text) {
