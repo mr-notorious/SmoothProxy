@@ -28,7 +28,7 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
     compile 'com.google.code.gson:gson:2.8.5'
-    compile 'com.squareup.okhttp3:okhttp:3.12.6'
+    compile 'com.squareup.okhttp3:okhttp:3.12.7'
     compile 'org.apache.commons:commons-lang3:3.8.1'
     compile 'org.jsoup:jsoup:1.12.1'
     compile 'org.nanohttpd:nanohttpd:2.3.1'

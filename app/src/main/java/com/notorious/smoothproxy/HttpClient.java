@@ -29,30 +29,22 @@ import com.google.gson.JsonObject;
 
 import org.jsoup.parser.Parser;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 final class HttpClient {
     private static final OkHttpClient CLIENT = new OkHttpClient();
-    private static final Gson GSON = new Gson();
+    private static final Gson PARSER = new Gson();
 
     static String decode(String text) {
         return Parser.unescapeEntities(text, false);
     }
 
-    static String encode(String text) {
-        try {
-            return URLEncoder.encode(text, StandardCharsets.UTF_8.name());
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    static ResponseBody getResponseBody(String url) {
+    static ResponseBody getBody(String url) {
         try {
             return call(url);
         } catch (Exception e) {
@@ -60,15 +52,33 @@ final class HttpClient {
         }
     }
 
-    static JsonObject getResponseJson(String url) {
+    static JsonObject getJson(String url) {
         try {
-            return GSON.fromJson(call(url).charStream(), JsonObject.class);
+            return PARSER.fromJson(call(url).charStream(), JsonObject.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    static JsonObject getJson(String url, RequestBody body) {
+        try {
+            return PARSER.fromJson(call(url, body).charStream(), JsonObject.class);
         } catch (Exception e) {
             return null;
         }
     }
 
     private static ResponseBody call(String url) throws Exception {
-        return CLIENT.newCall(new Request.Builder().url(url).build()).execute().body();
+        return call(new Request.Builder().url(HttpUrl.get(url)).build());
+    }
+
+    private static ResponseBody call(String url, RequestBody body) throws Exception {
+        return call(new Request.Builder().url(HttpUrl.get(url)).post(body).build());
+    }
+
+    private static ResponseBody call(Request request) throws Exception {
+        Response response = CLIENT.newCall(request).execute();
+        if (!response.isSuccessful()) throw new Exception();
+        return response.body();
     }
 }

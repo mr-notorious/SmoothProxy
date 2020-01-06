@@ -45,11 +45,10 @@ import java.util.Objects;
 import java.util.TimeZone;
 
 import fi.iki.elonen.NanoHTTPD;
+import okhttp3.FormBody;
 import okhttp3.ResponseBody;
 
 final class HttpServer extends NanoHTTPD {
-    private static final Response NOT_FOUND = newFixedLengthResponse(Response.Status.NOT_FOUND, NanoHTTPD.MIME_PLAINTEXT, "Not Found");
-
     private final String host;
     private final int port;
     private final Bind bind;
@@ -81,26 +80,24 @@ final class HttpServer extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         Response res = super.serve(session);
-        String uri = session.getUri();
+        String path = session.getUri();
 
-        if (uri.endsWith(".ts") || uri.equals("/chunks.m3u8")) {
-            String num = session.getParameters().get("n").get(0);
-            res = getResponse(getUrl(uri, session.getQueryParameterString(), num));
+        if (path.endsWith(".ts") || path.equals("/chunks.m3u8")) {
+            res = getResponse(getUrl(session.getParameters().get("n").get(0), path, session.getQueryParameterString()));
 
-        } else if (uri.equals("/playlist.m3u8")) {
-            String num = session.getParameters().get("n").get(0);
-            res = getResponse(getUrl(uri, session.getQueryParameterString() + "&wmsAuthSign=" + getAuth(), num));
+        } else if (path.equals("/playlist.m3u8")) {
+            res = getResponse(getUrl(session.getParameters().get("n").get(0), path, session.getQueryParameterString() + "&wmsAuthSign=" + getAuth()));
 
-        } else if (uri.equals("/master.xml")) {
+        } else if (path.equals("/master.xml")) {
             res = getResponse("https://guide.smoothstreams.tv/altepg/xmltv2.xml");
 
-        } else if (uri.equals("/sports.xml")) {
+        } else if (path.equals("/sports.xml")) {
             res = getResponse("https://guide.smoothstreams.tv/feed.xml");
 
-        } else if (uri.equals("/master.m3u8")) {
+        } else if (path.equals("/master.m3u8")) {
             res = getMaster();
 
-        } else if (uri.equals("/sports.m3u8")) {
+        } else if (path.equals("/sports.m3u8")) {
             res = getSports();
         }
 
@@ -108,24 +105,28 @@ final class HttpServer extends NanoHTTPD {
         return res;
     }
 
-    private String getUrl(String uri, String query, String num) {
-        return "https://" + server + ".smoothstreams.tv/" + service + "/ch" + num + "q" + (NumberUtils.toInt(num) < 70 ? quality : 1) + ".stream" + uri + "?" + query;
+    private String getUrl(String num, String path, String query) {
+        return "https://" + server + ".smoothstreams.tv/" + service + "/ch" + num + "q" + (NumberUtils.toInt(num) < 70 ? quality : 1) + ".stream" + path + "?" + query;
     }
 
     private Response getResponse(String url) {
-        ResponseBody rB = HttpClient.getResponseBody(url);
-        return rB != null ? newFixedLengthResponse(Response.Status.OK, Objects.toString(rB.contentType(), NanoHTTPD.MIME_PLAINTEXT), rB.byteStream(), rB.contentLength()) : NOT_FOUND;
+        ResponseBody body = HttpClient.getBody(url);
+        return body != null ? newFixedLengthResponse(Response.Status.OK, Objects.toString(body.contentType(), NanoHTTPD.MIME_PLAINTEXT), body.byteStream(), body.contentLength()) : getNotFoundResponse();
+    }
+
+    private Response getNotFoundResponse() {
+        return newFixedLengthResponse(Response.Status.NOT_FOUND, NanoHTTPD.MIME_PLAINTEXT, "Not Found");
     }
 
     private synchronized String getAuth() {
         long now = System.currentTimeMillis();
         if (auth == null || time < now) {
-            JsonObject rJ = HttpClient.getResponseJson((service.contains("mma") ? "https://www.mma-tv.net/loginForm.php" : "https://auth.smoothstreams.tv/hash_api.php")
-                    + "?username=" + HttpClient.encode(username) + "&password=" + HttpClient.encode(password) + "&site=" + service);
 
-            if (rJ != null && rJ.has("code")) {
-                if (rJ.getAsJsonPrimitive("code").getAsInt() == 1) {
-                    auth = rJ.getAsJsonPrimitive("hash").getAsString();
+            JsonObject json = HttpClient.getJson("https://auth.smoothstreams.tv/hash_api.php", new FormBody.Builder().add("username", username).add("password", password).add("site", service).build());
+            if (json != null) {
+
+                if (json.getAsJsonPrimitive("code").getAsInt() == 1) {
+                    auth = json.getAsJsonPrimitive("hash").getAsString();
                     time = now + 7200000;
 
                 } else bind.setNotification("Unauthorized");
@@ -138,27 +139,31 @@ final class HttpServer extends NanoHTTPD {
     private Response getMaster() {
         List<Channel> channels = new ArrayList<>();
 
-        JsonObject rJ = HttpClient.getResponseJson("https://guide.smoothstreams.tv/altepg/channels.json");
-        if (rJ != null) {
-            for (String key : rJ.keySet()) {
-                JsonObject jO = rJ.getAsJsonObject(key);
+        JsonObject json = HttpClient.getJson("https://guide.smoothstreams.tv/altepg/channels.json");
+        if (json != null) {
+
+            for (String key : json.keySet()) {
+                JsonObject jO = json.getAsJsonObject(key);
 
                 String id = jO.getAsJsonPrimitive("xmltvid").getAsString();
                 int num = jO.getAsJsonPrimitive("channum").getAsInt();
                 String name = jO.getAsJsonPrimitive("channame").getAsString();
                 channels.add(new Channel(id, num, HttpClient.decode(name)));
             }
+
         } else {
-            rJ = HttpClient.getResponseJson("https://guide.smoothstreams.tv/feed.json");
-            if (rJ != null) {
-                for (String key : rJ.keySet()) {
-                    JsonObject jO = rJ.getAsJsonObject(key);
+            json = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
+            if (json != null) {
+
+                for (String key : json.keySet()) {
+                    JsonObject jO = json.getAsJsonObject(key);
 
                     String id = jO.getAsJsonPrimitive("channel_id").getAsString();
                     String name = jO.getAsJsonPrimitive("name").getAsString().substring(5).trim();
                     channels.add(new Channel(id, NumberUtils.toInt(id), HttpClient.decode(name)));
                 }
-            } else return NOT_FOUND;
+
+            } else return getNotFoundResponse();
         }
 
         Collections.sort(channels);
@@ -175,18 +180,20 @@ final class HttpServer extends NanoHTTPD {
         List<Sport> sports = new ArrayList<>();
         Date now = new Date();
 
-        JsonObject rJ = HttpClient.getResponseJson("https://guide.smoothstreams.tv/feed.json");
-        if (rJ != null) {
-            for (String key : rJ.keySet()) {
-                JsonObject jO = rJ.getAsJsonObject(key);
+        JsonObject json = HttpClient.getJson("https://guide.smoothstreams.tv/feed.json");
+        if (json != null) {
 
-                JsonArray jA = jO.getAsJsonArray("items");
+            for (String key : json.keySet()) {
+
+                JsonArray jA = json.getAsJsonObject(key).getAsJsonArray("items");
                 if (jA != null) {
+
                     for (JsonElement jE : jA) {
-                        jO = jE.getAsJsonObject();
+                        JsonObject jO = jE.getAsJsonObject();
 
                         Date time = Sport.parseTime(jO.getAsJsonPrimitive("time").getAsString());
                         if (Sport.isSameDate(now, time)) {
+
                             int num = jO.getAsJsonPrimitive("channel").getAsInt();
                             String name = jO.getAsJsonPrimitive("name").getAsString();
                             String group = jO.getAsJsonPrimitive("category").getAsString();
@@ -197,7 +204,8 @@ final class HttpServer extends NanoHTTPD {
                     }
                 }
             }
-        } else return NOT_FOUND;
+
+        } else return getNotFoundResponse();
 
         int i = 1;
         Collections.sort(sports);
